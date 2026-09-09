@@ -1,0 +1,14 @@
+[configuration]
+
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = 4.2
+reloadable = true
+
+[libraries]
+
+windows.debug.x86_64   = "res://../target/debug/naughtyattributes.dll"
+windows.release.x86_64 = "res://../target/release/naughtyattributes.dll"
+linux.debug.x86_64     = "res://../target/debug/libnaughtyattributes.so"
+linux.release.x86_64   = "res://../target/release/libnaughtyattributes.so"
+macos.debug            = "res://../target/debug/libnaughtyattributes.dylib"
+macos.release          = "res://../target/release/libnaughtyattributes.dylib"
