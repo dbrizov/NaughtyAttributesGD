@@ -75,11 +75,11 @@ pub fn parse_hint_string(hint_string: &str, is_known_key: impl Fn(&str) -> bool)
         };
 
         if builtin_hint(key).is_some() {
-            parsed.builtin = Some((key.to_string(), raw_args.to_string()));
+            parsed.builtin = Some((key.to_string(), tidy_builtin_args(raw_args)));
         } else if is_known_key(key) {
             parsed.attributes.push(Entry {
                 key: key.to_string(),
-                raw_args: raw_args.to_string(),
+                raw_args: raw_args.trim().to_string(),
             });
         } else {
             parsed.unknown_keys.push(key.to_string());
@@ -87,6 +87,14 @@ pub fn parse_hint_string(hint_string: &str, is_known_key: impl Fn(&str) -> bool)
     }
 
     parsed
+}
+
+pub fn tidy_builtin_args(raw_args: &str) -> String {
+    raw_args
+        .split(',')
+        .map(str::trim)
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 pub fn split_args(raw_args: &str) -> Vec<String> {
@@ -239,6 +247,31 @@ mod tests {
         assert_eq!(unescape(r"a\,b"), "a,b");
         assert_eq!(unescape(r"a\;b"), "a;b");
         assert_eq!(unescape(r"a\\b"), r"a\b");
+    }
+
+    #[test]
+    fn tolerates_whitespace_around_delimiters() {
+        let parsed = parse_hint_string(
+            "show_if : (level>5&&is_weapon)||kind==Weapon.MAGIC ;    range  : 0 ,   10,   0.1",
+            known,
+        );
+
+        assert_eq!(parsed.attributes.len(), 1);
+        assert_eq!(parsed.attributes[0].key, "show_if");
+        assert_eq!(
+            parsed.attributes[0].raw_args,
+            "(level>5&&is_weapon)||kind==Weapon.MAGIC"
+        );
+        assert_eq!(
+            parsed.builtin,
+            Some(("range".to_string(), "0,10,0.1".to_string()))
+        );
+    }
+
+    #[test]
+    fn builtin_args_keep_internal_spaces() {
+        let parsed = parse_hint_string("enum: One , Two Three , Four", known);
+        assert_eq!(parsed.builtin.unwrap().1, "One,Two Three,Four");
     }
 
     #[test]

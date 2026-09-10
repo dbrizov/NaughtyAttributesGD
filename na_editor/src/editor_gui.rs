@@ -1,6 +1,7 @@
 use godot::classes::{Control, EditorInspector, EditorProperty};
 use godot::prelude::*;
 use na_core::LOG_PREFIX;
+use na_core::attributes::meta;
 use na_core::descriptor::PropertyDescriptor;
 
 pub fn draw_property(
@@ -8,6 +9,10 @@ pub fn draw_property(
     object: &Gd<Object>,
     descriptor: &PropertyDescriptor,
 ) -> Option<Gd<EditorProperty>> {
+    if !meta::is_visible(&descriptor.metas, object) {
+        return None;
+    }
+
     let editor = EditorInspector::instantiate_property_editor(
         object,
         descriptor.variant_type,

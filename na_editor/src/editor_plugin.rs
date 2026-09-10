@@ -117,7 +117,7 @@ impl NaughtyEditorPlugin {
         };
 
         self.refreshing = true;
-        plugin.bind_mut().refresh_conditions();
+        plugin.call_deferred("refresh_conditions", &[]);
         self.refreshing = false;
     }
 }
