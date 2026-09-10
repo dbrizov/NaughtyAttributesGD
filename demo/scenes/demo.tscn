@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://rl6ego67awxk"]
 
 [ext_resource type="Script" uid="uid://ck570lf6pp743" path="res://scripts/meta_tests/show_if.gd" id="1_tqfh0"]
-[ext_resource type="Script" uid="uid://hu0b451jnsv1" path="res://scripts/builtint_test.gd" id="2_ba4lm"]
+[ext_resource type="Script" uid="uid://hu0b451jnsv1" path="res://scripts/builtin_test.gd" id="2_ba4lm"]
 
 [node name="root" type="Node3D" unique_id=1486502538]
 

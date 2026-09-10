@@ -9,10 +9,10 @@ use crate::editor_inspector_plugin::NaughtyEditorInspectorPlugin;
 #[class(tool, init, base = EditorPlugin)]
 pub struct NaughtyEditorPlugin {
     inspector_plugin: Option<Gd<NaughtyEditorInspectorPlugin>>,
-    refresh_handle: Option<ConnectHandle>,
-    saved_handle: Option<ConnectHandle>,
-    undo_handle: Option<ConnectHandle>,
-    refreshing: bool,
+    property_edited_handle: Option<ConnectHandle>,
+    resource_saved_handle: Option<ConnectHandle>,
+    version_changed_handle: Option<ConnectHandle>,
+    is_refreshing: bool,
     base: Base<EditorPlugin>,
 }
 
@@ -26,15 +26,15 @@ impl IEditorPlugin for NaughtyEditorPlugin {
             .add_inspector_plugin(&plugin.clone().upcast::<EditorInspectorPlugin>());
         self.inspector_plugin = Some(plugin);
 
-        self.connect_refresh();
-        self.connect_saved();
-        self.connect_undo();
+        self.connect_property_edited();
+        self.connect_resource_saved();
+        self.connect_version_changed();
     }
 
     fn exit_tree(&mut self) {
-        self.disconnect_undo();
-        self.disconnect_saved();
-        self.disconnect_refresh();
+        self.disconnect_version_changed();
+        self.disconnect_resource_saved();
+        self.disconnect_property_edited();
 
         if let Some(plugin) = self.inspector_plugin.take() {
             self.base_mut()
@@ -44,19 +44,19 @@ impl IEditorPlugin for NaughtyEditorPlugin {
 
     fn on_notification(&mut self, what: NodeNotification) {
         if what == NodeNotification::EXTENSION_RELOADED {
-            self.refresh_handle = None;
-            self.saved_handle = None;
-            self.undo_handle = None;
-            self.connect_refresh();
-            self.connect_saved();
-            self.connect_undo();
+            self.property_edited_handle = None;
+            self.resource_saved_handle = None;
+            self.version_changed_handle = None;
+            self.connect_property_edited();
+            self.connect_resource_saved();
+            self.connect_version_changed();
         }
     }
 }
 
 impl NaughtyEditorPlugin {
-    fn connect_refresh(&mut self) {
-        if self.refresh_handle.is_some() {
+    fn connect_property_edited(&mut self) {
+        if self.property_edited_handle.is_some() {
             return;
         }
 
@@ -69,19 +69,33 @@ impl NaughtyEditorPlugin {
             .property_edited()
             .connect_other(&*self, Self::on_property_edited);
 
-        self.refresh_handle = Some(handle);
+        self.property_edited_handle = Some(handle);
     }
 
-    fn disconnect_refresh(&mut self) {
-        if let Some(handle) = self.refresh_handle.take()
+    fn disconnect_property_edited(&mut self) {
+        if let Some(handle) = self.property_edited_handle.take()
             && handle.is_connected()
         {
             handle.disconnect();
         }
     }
 
-    fn connect_saved(&mut self) {
-        if self.saved_handle.is_some() {
+    fn on_property_edited(&mut self, _property: GString) {
+        if self.is_refreshing {
+            return;
+        }
+
+        let Some(mut plugin) = self.inspector_plugin.clone() else {
+            return;
+        };
+
+        self.is_refreshing = true;
+        plugin.call_deferred("refresh_conditions", &[]);
+        self.is_refreshing = false;
+    }
+
+    fn connect_resource_saved(&mut self) {
+        if self.resource_saved_handle.is_some() {
             return;
         }
 
@@ -91,11 +105,11 @@ impl NaughtyEditorPlugin {
             .resource_saved()
             .connect_other(&*self, Self::on_resource_saved);
 
-        self.saved_handle = Some(handle);
+        self.resource_saved_handle = Some(handle);
     }
 
-    fn disconnect_saved(&mut self) {
-        if let Some(handle) = self.saved_handle.take()
+    fn disconnect_resource_saved(&mut self) {
+        if let Some(handle) = self.resource_saved_handle.take()
             && handle.is_connected()
         {
             handle.disconnect();
@@ -112,8 +126,8 @@ impl NaughtyEditorPlugin {
         }
     }
 
-    fn connect_undo(&mut self) {
-        if self.undo_handle.is_some() {
+    fn connect_version_changed(&mut self) {
+        if self.version_changed_handle.is_some() {
             return;
         }
 
@@ -125,38 +139,24 @@ impl NaughtyEditorPlugin {
             .clone()
             .signals()
             .version_changed()
-            .connect_other(&*self, Self::on_undo_version_changed);
+            .connect_other(&*self, Self::on_version_changed);
 
-        self.undo_handle = Some(handle);
+        self.version_changed_handle = Some(handle);
     }
 
-    fn disconnect_undo(&mut self) {
-        if let Some(handle) = self.undo_handle.take()
+    fn disconnect_version_changed(&mut self) {
+        if let Some(handle) = self.version_changed_handle.take()
             && handle.is_connected()
         {
             handle.disconnect();
         }
     }
 
-    fn on_undo_version_changed(&mut self) {
+    fn on_version_changed(&mut self) {
         let Some(mut plugin) = self.inspector_plugin.clone() else {
             return;
         };
 
         plugin.call_deferred("sync_property_editors", &[]);
-    }
-
-    fn on_property_edited(&mut self, _property: GString) {
-        if self.refreshing {
-            return;
-        }
-
-        let Some(mut plugin) = self.inspector_plugin.clone() else {
-            return;
-        };
-
-        self.refreshing = true;
-        plugin.call_deferred("refresh_conditions", &[]);
-        self.refreshing = false;
     }
 }
