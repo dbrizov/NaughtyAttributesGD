@@ -1,0 +1,55 @@
+use godot::classes::{Control, EditorInspector, EditorProperty};
+use godot::prelude::*;
+use na_core::LOG_PREFIX;
+use na_core::descriptor::PropertyDescriptor;
+
+pub fn draw_property(
+    container: &mut Gd<Control>,
+    object: &Gd<Object>,
+    descriptor: &PropertyDescriptor,
+) -> Option<Gd<EditorProperty>> {
+    let editor = EditorInspector::instantiate_property_editor(
+        object,
+        descriptor.variant_type,
+        &GString::from(&descriptor.name),
+        descriptor.hint,
+        &descriptor.hint_string,
+        descriptor.usage.ord() as u32,
+    );
+
+    let Some(mut editor) = editor else {
+        godot_warn!("{LOG_PREFIX} no property editor for '{}'", descriptor.name);
+        return None;
+    };
+
+    editor.set_label(&label_for(&descriptor.name));
+    container.add_child(&editor);
+    editor.set_object_and_property(object, &descriptor.name);
+    editor.update_property();
+
+    Some(editor)
+}
+
+fn label_for(name: &StringName) -> GString {
+    GString::from(&name.to_string().to_pascal_case_with_spaces())
+}
+
+trait ICapitalize {
+    fn to_pascal_case_with_spaces(&self) -> String;
+}
+
+impl ICapitalize for String {
+    fn to_pascal_case_with_spaces(&self) -> String {
+        self.split('_')
+            .filter(|word| !word.is_empty())
+            .map(|word| {
+                let mut chars = word.chars();
+                match chars.next() {
+                    Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                    None => String::new(),
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+}

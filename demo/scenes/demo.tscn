@@ -1,14 +1,12 @@
-[gd_scene format=3 uid="uid://rl6ego67awxk"]
+[gd_scene load_steps=3 format=3 uid="uid://rl6ego67awxk"]
 
-[ext_resource type="Script" uid="uid://ck570lf6pp743" path="res://scripts/show_if.gd" id="1_tqfh0"]
+[ext_resource type="Script" path="res://scripts/tests/builtin_hints_test.gd" id="1_builtin"]
+[ext_resource type="Script" path="res://scripts/tests/untouched_test.gd" id="2_untouched"]
 
-[node name="root" type="Node3D" unique_id=1486502538]
+[node name="root" type="Node"]
 
-[node name="drawer_attributes" type="Node3D" parent="." unique_id=118726861]
+[node name="builtin_hints" type="Node" parent="."]
+script = ExtResource("1_builtin")
 
-[node name="meta_attributes" type="Node3D" parent="." unique_id=1126352231]
-
-[node name="show_if" type="Node3D" parent="meta_attributes" unique_id=227631067]
-script = ExtResource("1_tqfh0")
-
-[node name="validator_attributes" type="Node3D" parent="." unique_id=1633452842]
+[node name="untouched" type="Node" parent="."]
+script = ExtResource("2_untouched")
