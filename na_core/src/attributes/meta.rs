@@ -18,7 +18,7 @@ impl MetaAttribute {
         }
     }
 
-    pub fn is_key(key: &str) -> bool {
+    pub fn is_known_key(key: &str) -> bool {
         matches!(key, show_if::KEY)
     }
 }

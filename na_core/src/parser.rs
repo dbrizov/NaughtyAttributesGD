@@ -1,3 +1,4 @@
+use godot::prelude::GString;
 use godot::register::info::PropertyHint;
 
 pub const BUILTIN_HINTS: &[(&str, PropertyHint)] = &[
@@ -34,7 +35,7 @@ pub const BUILTIN_HINTS: &[(&str, PropertyHint)] = &[
     ("localizable_string", PropertyHint::LOCALIZABLE_STRING),
 ];
 
-pub fn builtin_hint(key: &str) -> Option<PropertyHint> {
+pub fn builtin_hint_from_key(key: &str) -> Option<PropertyHint> {
     BUILTIN_HINTS
         .iter()
         .find(|(name, _)| *name == key)
@@ -42,26 +43,43 @@ pub fn builtin_hint(key: &str) -> Option<PropertyHint> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Entry {
+pub struct AttributeEntry {
     pub key: String,
     pub raw_args: String,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct ParsedHint {
+pub struct ParsedAnnotation {
     pub builtin: Option<(String, String)>,
-    pub attributes: Vec<Entry>,
+    pub attributes: Vec<AttributeEntry>,
     pub unknown_keys: Vec<String>,
 }
 
-impl ParsedHint {
+impl ParsedAnnotation {
+    pub fn builtin_hint(&self) -> PropertyHint {
+        self.builtin
+            .as_ref()
+            .and_then(|(key, _)| builtin_hint_from_key(key))
+            .unwrap_or(PropertyHint::NONE)
+    }
+
+    pub fn builtin_hint_string(&self) -> GString {
+        match &self.builtin {
+            Some((_, raw_args)) => GString::from(raw_args.as_str()),
+            None => GString::new(),
+        }
+    }
+
     pub fn is_claimed(&self) -> bool {
         self.builtin.is_some() || !self.attributes.is_empty()
     }
 }
 
-pub fn parse_hint_string(hint_string: &str, is_known_key: impl Fn(&str) -> bool) -> ParsedHint {
-    let mut parsed = ParsedHint::default();
+pub fn parse_annotation(
+    hint_string: &str,
+    is_known_key: impl Fn(&str) -> bool,
+) -> ParsedAnnotation {
+    let mut annotation = ParsedAnnotation::default();
 
     for entry in split_unescaped(hint_string, ';') {
         let entry = entry.trim();
@@ -74,22 +92,22 @@ pub fn parse_hint_string(hint_string: &str, is_known_key: impl Fn(&str) -> bool)
             None => (entry, ""),
         };
 
-        if builtin_hint(key).is_some() {
-            parsed.builtin = Some((key.to_string(), tidy_builtin_args(raw_args)));
+        if builtin_hint_from_key(key).is_some() {
+            annotation.builtin = Some((key.to_string(), trim_builtin_args(raw_args)));
         } else if is_known_key(key) {
-            parsed.attributes.push(Entry {
+            annotation.attributes.push(AttributeEntry {
                 key: key.to_string(),
                 raw_args: raw_args.trim().to_string(),
             });
         } else {
-            parsed.unknown_keys.push(key.to_string());
+            annotation.unknown_keys.push(key.to_string());
         }
     }
 
-    parsed
+    annotation
 }
 
-pub fn tidy_builtin_args(raw_args: &str) -> String {
+pub fn trim_builtin_args(raw_args: &str) -> String {
     raw_args
         .split(',')
         .map(str::trim)
@@ -163,67 +181,67 @@ mod tests {
 
     #[test]
     fn splits_entries_on_semicolons() {
-        let parsed = parse_hint_string("show_if:a;min_value:3", known);
-        assert_eq!(parsed.attributes.len(), 2);
-        assert_eq!(parsed.attributes[0].key, "show_if");
-        assert_eq!(parsed.attributes[0].raw_args, "a");
-        assert_eq!(parsed.attributes[1].key, "min_value");
+        let annotation = parse_annotation("show_if:a;min_value:3", known);
+        assert_eq!(annotation.attributes.len(), 2);
+        assert_eq!(annotation.attributes[0].key, "show_if");
+        assert_eq!(annotation.attributes[0].raw_args, "a");
+        assert_eq!(annotation.attributes[1].key, "min_value");
     }
 
     #[test]
     fn splits_key_on_first_colon_only() {
-        let parsed = parse_hint_string("show_if:kind == Weapon.MELEE", known);
-        assert_eq!(parsed.attributes[0].raw_args, "kind == Weapon.MELEE");
+        let annotation = parse_annotation("show_if:kind == Weapon.MELEE", known);
+        assert_eq!(annotation.attributes[0].raw_args, "kind == Weapon.MELEE");
 
-        let parsed = parse_hint_string("show_if:a ? b : c", known);
-        assert_eq!(parsed.attributes[0].raw_args, "a ? b : c");
+        let annotation = parse_annotation("show_if:a ? b : c", known);
+        assert_eq!(annotation.attributes[0].raw_args, "a ? b : c");
     }
 
     #[test]
     fn keeps_commas_inside_unsplit_args() {
-        let parsed = parse_hint_string(r#"show_if:has_item("sword", 2)"#, known);
-        assert_eq!(parsed.attributes[0].raw_args, r#"has_item("sword", 2)"#);
+        let annotation = parse_annotation(r#"show_if:has_item("sword", 2)"#, known);
+        assert_eq!(annotation.attributes[0].raw_args, r#"has_item("sword", 2)"#);
     }
 
     #[test]
     fn recognises_builtin_hints() {
-        let parsed = parse_hint_string("range:0,10,0.1", known);
+        let annotation = parse_annotation("range:0,10,0.1", known);
         assert_eq!(
-            parsed.builtin,
+            annotation.builtin,
             Some(("range".to_string(), "0,10,0.1".to_string()))
         );
-        assert!(parsed.attributes.is_empty());
-        assert!(parsed.is_claimed());
+        assert!(annotation.attributes.is_empty());
+        assert!(annotation.is_claimed());
     }
 
     #[test]
     fn builtin_args_are_taken_verbatim() {
-        let parsed = parse_hint_string("enum:One,Two,Three;show_if:a", known);
-        assert_eq!(parsed.builtin.unwrap().1, "One,Two,Three");
-        assert_eq!(parsed.attributes.len(), 1);
+        let annotation = parse_annotation("enum:One,Two,Three;show_if:a", known);
+        assert_eq!(annotation.builtin.unwrap().1, "One,Two,Three");
+        assert_eq!(annotation.attributes.len(), 1);
     }
 
     #[test]
     fn empty_builtin_args_are_allowed() {
-        let parsed = parse_hint_string("multiline:", known);
+        let annotation = parse_annotation("multiline:", known);
         assert_eq!(
-            parsed.builtin,
+            annotation.builtin,
             Some(("multiline".to_string(), String::new()))
         );
-        assert!(parsed.is_claimed());
+        assert!(annotation.is_claimed());
     }
 
     #[test]
     fn unknown_keys_are_collected_not_claimed() {
-        let parsed = parse_hint_string("shwo_if:a", known);
-        assert_eq!(parsed.unknown_keys, vec!["shwo_if".to_string()]);
-        assert!(!parsed.is_claimed());
+        let annotation = parse_annotation("shwo_if:a", known);
+        assert_eq!(annotation.unknown_keys, vec!["shwo_if".to_string()]);
+        assert!(!annotation.is_claimed());
     }
 
     #[test]
     fn plain_hint_strings_are_not_claimed() {
-        assert!(!parse_hint_string("", known).is_claimed());
-        assert!(!parse_hint_string("2:", known).is_claimed());
+        assert!(!parse_annotation("", known).is_claimed());
+        assert!(!parse_annotation("2:", known).is_claimed());
     }
 
     #[test]
@@ -237,9 +255,12 @@ mod tests {
 
     #[test]
     fn escaped_delimiters_survive_entry_splitting() {
-        let parsed = parse_hint_string(r"info_box:one\;two", known);
-        assert_eq!(parsed.attributes.len(), 1);
-        assert_eq!(split_args(&parsed.attributes[0].raw_args), vec!["one;two"]);
+        let annotation = parse_annotation(r"info_box:one\;two", known);
+        assert_eq!(annotation.attributes.len(), 1);
+        assert_eq!(
+            split_args(&annotation.attributes[0].raw_args),
+            vec!["one;two"]
+        );
     }
 
     #[test]
@@ -251,34 +272,34 @@ mod tests {
 
     #[test]
     fn tolerates_whitespace_around_delimiters() {
-        let parsed = parse_hint_string(
+        let annotation = parse_annotation(
             "show_if : (level>5&&is_weapon)||kind==Weapon.MAGIC ;    range  : 0 ,   10,   0.1",
             known,
         );
 
-        assert_eq!(parsed.attributes.len(), 1);
-        assert_eq!(parsed.attributes[0].key, "show_if");
+        assert_eq!(annotation.attributes.len(), 1);
+        assert_eq!(annotation.attributes[0].key, "show_if");
         assert_eq!(
-            parsed.attributes[0].raw_args,
+            annotation.attributes[0].raw_args,
             "(level>5&&is_weapon)||kind==Weapon.MAGIC"
         );
         assert_eq!(
-            parsed.builtin,
+            annotation.builtin,
             Some(("range".to_string(), "0,10,0.1".to_string()))
         );
     }
 
     #[test]
     fn builtin_args_keep_internal_spaces() {
-        let parsed = parse_hint_string("enum: One , Two Three , Four", known);
-        assert_eq!(parsed.builtin.unwrap().1, "One,Two Three,Four");
+        let annotation = parse_annotation("enum: One , Two Three , Four", known);
+        assert_eq!(annotation.builtin.unwrap().1, "One,Two Three,Four");
     }
 
     #[test]
     fn every_builtin_key_resolves() {
         for (key, _) in BUILTIN_HINTS {
-            assert!(builtin_hint(key).is_some());
+            assert!(builtin_hint_from_key(key).is_some());
         }
-        assert!(builtin_hint("definitely_not_a_hint").is_none());
+        assert!(builtin_hint_from_key("definitely_not_a_hint").is_none());
     }
 }

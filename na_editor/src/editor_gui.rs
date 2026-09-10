@@ -36,25 +36,5 @@ pub fn draw_property(
 }
 
 fn label_for(name: &StringName) -> GString {
-    GString::from(&name.to_string().to_pascal_case_with_spaces())
-}
-
-trait ICapitalize {
-    fn to_pascal_case_with_spaces(&self) -> String;
-}
-
-impl ICapitalize for String {
-    fn to_pascal_case_with_spaces(&self) -> String {
-        self.split('_')
-            .filter(|word| !word.is_empty())
-            .map(|word| {
-                let mut chars = word.chars();
-                match chars.next() {
-                    Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-                    None => String::new(),
-                }
-            })
-            .collect::<Vec<_>>()
-            .join(" ")
-    }
+    GString::from(name).capitalize()
 }

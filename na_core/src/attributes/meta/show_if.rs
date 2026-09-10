@@ -34,9 +34,9 @@ impl ShowIf {
                     "{} {} '{}' - {}{}",
                     crate::LOG_PREFIX,
                     KEY,
-                    self.condition.source(),
+                    self.condition.expression_text(),
                     error,
-                    tool_hint(object, self.condition.source())
+                    tool_hint(object, self.condition.expression_text())
                 );
                 true
             }
@@ -44,8 +44,8 @@ impl ShowIf {
     }
 }
 
-fn tool_hint(object: &Gd<Object>, source: &str) -> &'static str {
-    if !source.contains('(') {
+fn tool_hint(object: &Gd<Object>, expression_text: &str) -> &'static str {
+    if !expression_text.contains('(') {
         return "";
     }
 

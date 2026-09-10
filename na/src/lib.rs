@@ -3,7 +3,7 @@ use godot::prelude::*;
 pub use na_core::*;
 pub use na_editor::*;
 
-struct NaughtyAttributes;
+struct NaughtyAttributesExtensionLibrary;
 
 #[gdextension]
-unsafe impl ExtensionLibrary for NaughtyAttributes {}
+unsafe impl ExtensionLibrary for NaughtyAttributesExtensionLibrary {}

@@ -10,7 +10,7 @@ use godot::obj::InstanceId;
 use godot::prelude::*;
 use godot::register::info::{PropertyHint, PropertyUsageFlags};
 use na_core::attributes::meta;
-use na_core::descriptor::{self, ClassDescriptor};
+use na_core::descriptor::ClassDescriptor;
 
 use crate::editor_gui;
 
@@ -150,7 +150,7 @@ impl NaughtyEditorInspectorPlugin {
         let descriptor = match cached {
             Some(descriptor) => descriptor,
             None => {
-                let parsed = Rc::new(descriptor::parse_object(object));
+                let parsed = Rc::new(ClassDescriptor::from_object(object));
                 self.cache.borrow_mut().insert(key, parsed.clone());
                 parsed
             }

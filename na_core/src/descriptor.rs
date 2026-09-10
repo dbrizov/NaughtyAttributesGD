@@ -4,14 +4,56 @@ use godot::register::info::{PropertyHint, PropertyUsageFlags};
 
 use crate::LOG_PREFIX;
 use crate::attributes::meta::MetaAttribute;
-use crate::attributes::{self, ParsedAttribute};
+use crate::attributes::{self, NaughtyAttribute};
 use crate::parse_context::ParseContext;
-use crate::parser::{self, ParsedHint};
+use crate::parser::{self, ParsedAnnotation};
 
 impl PropertyDescriptor {
+    fn plain(info: &PropertyInfo) -> Self {
+        Self {
+            name: StringName::from(info.name.as_str()),
+            variant_type: info.variant_type,
+            hint: info.hint,
+            hint_string: GString::from(info.hint_string.as_str()),
+            usage: info.usage,
+            claimed: false,
+            metas: Vec::new(),
+        }
+    }
+
+    fn unclaimed(info: &PropertyInfo) -> Self {
+        Self {
+            hint: PropertyHint::NONE,
+            hint_string: GString::new(),
+            ..Self::plain(info)
+        }
+    }
+
+    fn claimed(
+        info: &PropertyInfo,
+        annotation: &ParsedAnnotation,
+        metas: Vec<MetaAttribute>,
+    ) -> Self {
+        Self {
+            hint: annotation.builtin_hint(),
+            hint_string: annotation.builtin_hint_string(),
+            claimed: true,
+            metas,
+            ..Self::plain(info)
+        }
+    }
+
     pub fn is_naughty(&self) -> bool {
         self.claimed
     }
+}
+
+struct PropertyInfo {
+    name: String,
+    variant_type: VariantType,
+    hint: PropertyHint,
+    hint_string: String,
+    usage: PropertyUsageFlags,
 }
 
 pub struct PropertyDescriptor {
@@ -31,6 +73,76 @@ pub struct ClassDescriptor {
 }
 
 impl ClassDescriptor {
+    pub fn from_object(object: &Gd<Object>) -> ClassDescriptor {
+        let script_path = script_path(object);
+        let constants = merged_constants(object);
+        let mut properties = Vec::new();
+
+        for info in script_property_list(object) {
+            let usage: PropertyUsageFlags = info.at("usage").to();
+            if !is_editor_property(usage) {
+                continue;
+            }
+
+            let property = PropertyInfo {
+                name: info.at("name").to::<GString>().to_string(),
+                variant_type: info.at("type").to(),
+                hint: info.at("hint").to(),
+                hint_string: info.at("hint_string").to::<GString>().to_string(),
+                usage,
+            };
+
+            if property.hint != PropertyHint::NONE || property.hint_string.is_empty() {
+                properties.push(PropertyDescriptor::plain(&property));
+                continue;
+            }
+
+            let annotation =
+                parser::parse_annotation(&property.hint_string, attributes::is_known_key);
+
+            for key in &annotation.unknown_keys {
+                godot_warn!(
+                    "{LOG_PREFIX} {script_path}.{} - unknown attribute '{key}'",
+                    property.name
+                );
+            }
+
+            if !annotation.is_claimed() {
+                properties.push(PropertyDescriptor::unclaimed(&property));
+                continue;
+            }
+
+            let context = ParseContext {
+                script_path: &script_path,
+                property: &property.name,
+                constants: &constants,
+            };
+
+            let mut metas = Vec::new();
+            for entry in &annotation.attributes {
+                if let Some(NaughtyAttribute::Meta(meta)) =
+                    NaughtyAttribute::parse(&entry.key, &entry.raw_args, &context)
+                {
+                    metas.push(meta);
+                }
+            }
+
+            properties.push(PropertyDescriptor::claimed(&property, &annotation, metas));
+        }
+
+        let category = script_path
+            .rsplit('/')
+            .next()
+            .unwrap_or_default()
+            .to_string();
+
+        ClassDescriptor {
+            script_path,
+            category,
+            properties,
+        }
+    }
+
     pub fn is_naughty(&self) -> bool {
         self.properties.iter().any(PropertyDescriptor::is_naughty)
     }
@@ -39,107 +151,6 @@ impl ClassDescriptor {
         self.properties
             .iter()
             .find(|property| &property.name == name)
-    }
-}
-
-pub fn parse_object(object: &Gd<Object>) -> ClassDescriptor {
-    let script_path = script_path(object);
-    let constants = merged_constants(object);
-    let mut properties = Vec::new();
-
-    for info in script_property_list(object) {
-        let usage: PropertyUsageFlags = info.at("usage").to();
-        if !is_editor_property(usage) {
-            continue;
-        }
-
-        let hint: PropertyHint = info.at("hint").to();
-        let hint_string = info.at("hint_string").to::<GString>().to_string();
-        let name = info.at("name").to::<GString>().to_string();
-        let variant_type: VariantType = info.at("type").to();
-
-        if hint != PropertyHint::NONE || hint_string.is_empty() {
-            properties.push(PropertyDescriptor {
-                name: StringName::from(name.as_str()),
-                variant_type,
-                hint,
-                hint_string: GString::from(hint_string.as_str()),
-                usage,
-                claimed: false,
-                metas: Vec::new(),
-            });
-            continue;
-        }
-
-        let parsed = parser::parse_hint_string(&hint_string, attributes::is_known_key);
-
-        for key in &parsed.unknown_keys {
-            godot_warn!("{LOG_PREFIX} {script_path}.{name} - unknown attribute '{key}'");
-        }
-
-        if !parsed.is_claimed() {
-            properties.push(PropertyDescriptor {
-                name: StringName::from(name.as_str()),
-                variant_type,
-                hint: PropertyHint::NONE,
-                hint_string: GString::new(),
-                usage,
-                claimed: false,
-                metas: Vec::new(),
-            });
-            continue;
-        }
-
-        let context = ParseContext {
-            script_path: &script_path,
-            property: &name,
-            constants: &constants,
-        };
-
-        let mut metas = Vec::new();
-        for entry in &parsed.attributes {
-            match ParsedAttribute::parse(&entry.key, &entry.raw_args, &context) {
-                Some(ParsedAttribute::Meta(meta)) => metas.push(meta),
-                None => {}
-            }
-        }
-
-        properties.push(PropertyDescriptor {
-            name: StringName::from(name.as_str()),
-            variant_type,
-            hint: builtin_hint(&parsed),
-            hint_string: builtin_hint_string(&parsed),
-            usage,
-            claimed: true,
-            metas,
-        });
-    }
-
-    let category = script_path
-        .rsplit('/')
-        .next()
-        .unwrap_or_default()
-        .to_string();
-
-    ClassDescriptor {
-        script_path,
-        category,
-        properties,
-    }
-}
-
-fn builtin_hint(parsed: &ParsedHint) -> PropertyHint {
-    parsed
-        .builtin
-        .as_ref()
-        .and_then(|(key, _)| parser::builtin_hint(key))
-        .unwrap_or(PropertyHint::NONE)
-}
-
-fn builtin_hint_string(parsed: &ParsedHint) -> GString {
-    match &parsed.builtin {
-        Some((_, raw_args)) => GString::from(raw_args.as_str()),
-        None => GString::new(),
     }
 }
 

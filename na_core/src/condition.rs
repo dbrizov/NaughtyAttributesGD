@@ -2,7 +2,7 @@ use godot::classes::{Expression, Object};
 use godot::prelude::*;
 
 pub struct Condition {
-    source: String,
+    expression_text: String,
     expression: Gd<Expression>,
     inputs: VarArray,
     valid: bool,
@@ -10,7 +10,7 @@ pub struct Condition {
 }
 
 impl Condition {
-    pub fn compile(source: &str, constants: &VarDictionary) -> Self {
+    pub fn compile(expression_text: &str, constants: &VarDictionary) -> Self {
         let mut input_names = PackedStringArray::new();
         let mut inputs = VarArray::new();
 
@@ -21,7 +21,7 @@ impl Condition {
 
         let mut expression = Expression::new_gd();
         let error = expression
-            .parse_ex(&GString::from(&normalize(source)))
+            .parse_ex(&GString::from(&normalize_operators(expression_text)))
             .input_names(&input_names)
             .done();
 
@@ -33,7 +33,7 @@ impl Condition {
         };
 
         Self {
-            source: source.to_string(),
+            expression_text: expression_text.to_string(),
             expression,
             inputs,
             valid,
@@ -41,8 +41,8 @@ impl Condition {
         }
     }
 
-    pub fn source(&self) -> &str {
-        &self.source
+    pub fn expression_text(&self) -> &str {
+        &self.expression_text
     }
 
     pub fn is_valid(&self) -> bool {
@@ -74,9 +74,9 @@ impl Condition {
     }
 }
 
-pub fn normalize(source: &str) -> String {
-    let mut out = String::with_capacity(source.len());
-    let mut chars = source.chars().peekable();
+pub fn normalize_operators(expression_text: &str) -> String {
+    let mut out = String::with_capacity(expression_text.len());
+    let mut chars = expression_text.chars().peekable();
     let mut quote: Option<char> = None;
 
     while let Some(character) = chars.next() {
@@ -114,44 +114,44 @@ pub fn normalize(source: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::normalize;
+    use super::normalize_operators;
 
     #[test]
     fn inserts_spaces_around_replaced_operators() {
-        assert_eq!(normalize("a&&b"), "a and b");
-        assert_eq!(normalize("a||b"), "a or b");
+        assert_eq!(normalize_operators("a&&b"), "a and b");
+        assert_eq!(normalize_operators("a||b"), "a or b");
         assert_eq!(
-            normalize("(level>5&&is_weapon)||kind==Weapon.MAGIC"),
+            normalize_operators("(level>5&&is_weapon)||kind==Weapon.MAGIC"),
             "(level>5 and is_weapon) or kind==Weapon.MAGIC"
         );
         assert_eq!(
-            normalize("(level > 5&&is_weapon)||kind == Weapon.MAGIC"),
+            normalize_operators("(level > 5&&is_weapon)||kind == Weapon.MAGIC"),
             "(level > 5 and is_weapon) or kind == Weapon.MAGIC"
         );
     }
 
     #[test]
     fn leaves_spaced_operators_usable() {
-        assert_eq!(normalize("a && b"), "a  and  b");
-        assert_eq!(normalize("a || b"), "a  or  b");
+        assert_eq!(normalize_operators("a && b"), "a  and  b");
+        assert_eq!(normalize_operators("a || b"), "a  or  b");
     }
 
     #[test]
     fn leaves_keyword_forms_alone() {
-        assert_eq!(normalize("a and b"), "a and b");
-        assert_eq!(normalize("!a"), "!a");
+        assert_eq!(normalize_operators("a and b"), "a and b");
+        assert_eq!(normalize_operators("!a"), "!a");
     }
 
     #[test]
     fn does_not_touch_string_literals() {
         assert_eq!(
-            normalize(r#"has_item("a&&b") || x"#),
+            normalize_operators(r#"has_item("a&&b") || x"#),
             r#"has_item("a&&b")  or  x"#
         );
     }
 
     #[test]
     fn leaves_single_ampersand_alone() {
-        assert_eq!(normalize("flags & 4 != 0"), "flags & 4 != 0");
+        assert_eq!(normalize_operators("flags & 4 != 0"), "flags & 4 != 0");
     }
 }
