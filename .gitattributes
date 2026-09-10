@@ -1,0 +1,11 @@
+# Normalize all text files to LF in the repository.
+# Git auto-detects text vs binary; the rules below only override eol.
+* text=auto eol=lf
+
+# Shell scripts must stay LF even on Windows.
+*.sh text eol=lf
+*.py text eol=lf
+
+# Windows scripts must stay CRLF.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
