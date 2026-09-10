@@ -1,0 +1,16 @@
+[package]
+name = "na"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+name = "naughtyattributes"
+crate-type = ["cdylib"]
+
+[dependencies]
+godot.workspace = true
+na_core.workspace = true
+na_editor.workspace = true

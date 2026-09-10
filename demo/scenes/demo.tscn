@@ -4,7 +4,11 @@
 
 [node name="root" type="Node3D" unique_id=1486502538]
 
+[node name="drawer_attributes" type="Node3D" parent="." unique_id=118726861]
+
 [node name="meta_attributes" type="Node3D" parent="." unique_id=1126352231]
 
 [node name="show_if" type="Node3D" parent="meta_attributes" unique_id=227631067]
 script = ExtResource("1_tqfh0")
+
+[node name="validator_attributes" type="Node3D" parent="." unique_id=1633452842]

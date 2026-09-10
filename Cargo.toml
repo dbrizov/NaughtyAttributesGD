@@ -1,14 +1,15 @@
 [workspace]
-members = ["na_macros"]
+members = ["na", "na_core", "na_editor", "na_macros"]
+resolver = "3"
 
-[package]
-name = "naughtyattributes"
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+repository = "https://github.com/dbrizov/NaughtyAttributesGD"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
-[dependencies]
+[workspace.dependencies]
 godot = "0.5.5"
+na_core = { path = "na_core" }
+na_editor = { path = "na_editor" }
 na_macros = { path = "na_macros" }

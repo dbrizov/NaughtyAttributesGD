@@ -101,6 +101,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
 
 [[package]]
+name = "na"
+version = "0.1.0"
+dependencies = [
+ "godot",
+ "na_core",
+ "na_editor",
+]
+
+[[package]]
+name = "na_core"
+version = "0.1.0"
+dependencies = [
+ "godot",
+ "na_macros",
+]
+
+[[package]]
+name = "na_editor"
+version = "0.1.0"
+dependencies = [
+ "godot",
+ "na_core",
+]
+
+[[package]]
 name = "na_macros"
 version = "0.1.0"
 dependencies = [
@@ -123,14 +148,6 @@ name = "nanoserde-derive"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a846cbc04412cf509efcd8f3694b114fc700a035fb5a37f21517f9fb019f1ebc"
-
-[[package]]
-name = "naughtyattributes"
-version = "0.1.0"
-dependencies = [
- "godot",
- "na_macros",
-]
 
 [[package]]
 name = "proc-macro2"

@@ -1,9 +1,7 @@
 use godot::prelude::*;
 
-mod meta_attributes;
-mod naughty_attribute;
-mod naughty_editor_inspector_plugin;
-mod naughty_editor_plugin;
+pub use na_core::*;
+pub use na_editor::*;
 
 struct NaughtyAttributes;
 
