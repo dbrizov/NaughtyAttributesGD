@@ -1,6 +1,8 @@
 pub mod meta;
 
-use crate::parse_context::ParseContext;
+use godot::prelude::*;
+
+use crate::LOG_PREFIX;
 use meta::MetaAttribute;
 
 pub enum NaughtyAttribute {
@@ -15,4 +17,23 @@ impl NaughtyAttribute {
 
 pub fn is_known_key(key: &str) -> bool {
     MetaAttribute::is_known_key(key)
+}
+
+pub struct ParseContext<'a> {
+    pub script_path: &'a str,
+    pub property: &'a str,
+    pub constants: &'a VarDictionary,
+}
+
+impl ParseContext<'_> {
+    pub fn warn(&self, key: &str, message: &str) {
+        godot_warn!(
+            "{} {}.{} - {}: {}",
+            LOG_PREFIX,
+            self.script_path,
+            self.property,
+            key,
+            message
+        );
+    }
 }

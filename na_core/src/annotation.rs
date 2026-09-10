@@ -49,13 +49,42 @@ pub struct AttributeEntry {
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct ParsedAnnotation {
+pub struct PropertyAnnotation {
     pub builtin: Option<(String, String)>,
     pub attributes: Vec<AttributeEntry>,
     pub unknown_keys: Vec<String>,
 }
 
-impl ParsedAnnotation {
+impl PropertyAnnotation {
+    pub fn parse(hint_string: &str, is_known_key: impl Fn(&str) -> bool) -> Self {
+        let mut annotation = PropertyAnnotation::default();
+
+        for entry in split_unescaped(hint_string, ';') {
+            let entry = entry.trim();
+            if entry.is_empty() {
+                continue;
+            }
+
+            let (key, raw_args) = match first_unescaped(entry, ':') {
+                Some(index) => (entry[..index].trim(), &entry[index + 1..]),
+                None => (entry, ""),
+            };
+
+            if builtin_hint_from_key(key).is_some() {
+                annotation.builtin = Some((key.to_string(), trim_builtin_args(raw_args)));
+            } else if is_known_key(key) {
+                annotation.attributes.push(AttributeEntry {
+                    key: key.to_string(),
+                    raw_args: raw_args.trim().to_string(),
+                });
+            } else {
+                annotation.unknown_keys.push(key.to_string());
+            }
+        }
+
+        annotation
+    }
+
     pub fn builtin_hint(&self) -> PropertyHint {
         self.builtin
             .as_ref()
@@ -73,38 +102,6 @@ impl ParsedAnnotation {
     pub fn is_claimed(&self) -> bool {
         self.builtin.is_some() || !self.attributes.is_empty()
     }
-}
-
-pub fn parse_annotation(
-    hint_string: &str,
-    is_known_key: impl Fn(&str) -> bool,
-) -> ParsedAnnotation {
-    let mut annotation = ParsedAnnotation::default();
-
-    for entry in split_unescaped(hint_string, ';') {
-        let entry = entry.trim();
-        if entry.is_empty() {
-            continue;
-        }
-
-        let (key, raw_args) = match first_unescaped(entry, ':') {
-            Some(index) => (entry[..index].trim(), &entry[index + 1..]),
-            None => (entry, ""),
-        };
-
-        if builtin_hint_from_key(key).is_some() {
-            annotation.builtin = Some((key.to_string(), trim_builtin_args(raw_args)));
-        } else if is_known_key(key) {
-            annotation.attributes.push(AttributeEntry {
-                key: key.to_string(),
-                raw_args: raw_args.trim().to_string(),
-            });
-        } else {
-            annotation.unknown_keys.push(key.to_string());
-        }
-    }
-
-    annotation
 }
 
 pub fn trim_builtin_args(raw_args: &str) -> String {
@@ -181,7 +178,7 @@ mod tests {
 
     #[test]
     fn splits_entries_on_semicolons() {
-        let annotation = parse_annotation("show_if:a;min_value:3", known);
+        let annotation = PropertyAnnotation::parse("show_if:a;min_value:3", known);
         assert_eq!(annotation.attributes.len(), 2);
         assert_eq!(annotation.attributes[0].key, "show_if");
         assert_eq!(annotation.attributes[0].raw_args, "a");
@@ -190,22 +187,22 @@ mod tests {
 
     #[test]
     fn splits_key_on_first_colon_only() {
-        let annotation = parse_annotation("show_if:kind == Weapon.MELEE", known);
+        let annotation = PropertyAnnotation::parse("show_if:kind == Weapon.MELEE", known);
         assert_eq!(annotation.attributes[0].raw_args, "kind == Weapon.MELEE");
 
-        let annotation = parse_annotation("show_if:a ? b : c", known);
+        let annotation = PropertyAnnotation::parse("show_if:a ? b : c", known);
         assert_eq!(annotation.attributes[0].raw_args, "a ? b : c");
     }
 
     #[test]
     fn keeps_commas_inside_unsplit_args() {
-        let annotation = parse_annotation(r#"show_if:has_item("sword", 2)"#, known);
+        let annotation = PropertyAnnotation::parse(r#"show_if:has_item("sword", 2)"#, known);
         assert_eq!(annotation.attributes[0].raw_args, r#"has_item("sword", 2)"#);
     }
 
     #[test]
     fn recognises_builtin_hints() {
-        let annotation = parse_annotation("range:0,10,0.1", known);
+        let annotation = PropertyAnnotation::parse("range:0,10,0.1", known);
         assert_eq!(
             annotation.builtin,
             Some(("range".to_string(), "0,10,0.1".to_string()))
@@ -216,14 +213,14 @@ mod tests {
 
     #[test]
     fn builtin_args_are_taken_verbatim() {
-        let annotation = parse_annotation("enum:One,Two,Three;show_if:a", known);
+        let annotation = PropertyAnnotation::parse("enum:One,Two,Three;show_if:a", known);
         assert_eq!(annotation.builtin.unwrap().1, "One,Two,Three");
         assert_eq!(annotation.attributes.len(), 1);
     }
 
     #[test]
     fn empty_builtin_args_are_allowed() {
-        let annotation = parse_annotation("multiline:", known);
+        let annotation = PropertyAnnotation::parse("multiline:", known);
         assert_eq!(
             annotation.builtin,
             Some(("multiline".to_string(), String::new()))
@@ -233,15 +230,15 @@ mod tests {
 
     #[test]
     fn unknown_keys_are_collected_not_claimed() {
-        let annotation = parse_annotation("shwo_if:a", known);
+        let annotation = PropertyAnnotation::parse("shwo_if:a", known);
         assert_eq!(annotation.unknown_keys, vec!["shwo_if".to_string()]);
         assert!(!annotation.is_claimed());
     }
 
     #[test]
     fn plain_hint_strings_are_not_claimed() {
-        assert!(!parse_annotation("", known).is_claimed());
-        assert!(!parse_annotation("2:", known).is_claimed());
+        assert!(!PropertyAnnotation::parse("", known).is_claimed());
+        assert!(!PropertyAnnotation::parse("2:", known).is_claimed());
     }
 
     #[test]
@@ -255,7 +252,7 @@ mod tests {
 
     #[test]
     fn escaped_delimiters_survive_entry_splitting() {
-        let annotation = parse_annotation(r"info_box:one\;two", known);
+        let annotation = PropertyAnnotation::parse(r"info_box:one\;two", known);
         assert_eq!(annotation.attributes.len(), 1);
         assert_eq!(
             split_args(&annotation.attributes[0].raw_args),
@@ -272,7 +269,7 @@ mod tests {
 
     #[test]
     fn tolerates_whitespace_around_delimiters() {
-        let annotation = parse_annotation(
+        let annotation = PropertyAnnotation::parse(
             "show_if : (level>5&&is_weapon)||kind==Weapon.MAGIC ;    range  : 0 ,   10,   0.1",
             known,
         );
@@ -291,7 +288,7 @@ mod tests {
 
     #[test]
     fn builtin_args_keep_internal_spaces() {
-        let annotation = parse_annotation("enum: One , Two Three , Four", known);
+        let annotation = PropertyAnnotation::parse("enum: One , Two Three , Four", known);
         assert_eq!(annotation.builtin.unwrap().1, "One,Two Three,Four");
     }
 

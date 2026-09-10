@@ -1,8 +1,8 @@
 use godot::classes::Object;
 use godot::prelude::*;
 
+use crate::attributes::ParseContext;
 use crate::condition::Condition;
-use crate::parse_context::ParseContext;
 
 pub const KEY: &str = "show_if";
 

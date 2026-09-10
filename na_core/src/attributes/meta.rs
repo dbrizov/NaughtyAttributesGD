@@ -3,7 +3,7 @@ pub mod show_if;
 use godot::classes::Object;
 use godot::prelude::*;
 
-use crate::parse_context::ParseContext;
+use crate::attributes::ParseContext;
 use show_if::ShowIf;
 
 pub enum MetaAttribute {

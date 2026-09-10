@@ -3,10 +3,9 @@ use godot::prelude::*;
 use godot::register::info::{PropertyHint, PropertyUsageFlags};
 
 use crate::LOG_PREFIX;
+use crate::annotation::PropertyAnnotation;
 use crate::attributes::meta::MetaAttribute;
-use crate::attributes::{self, NaughtyAttribute};
-use crate::parse_context::ParseContext;
-use crate::parser::{self, ParsedAnnotation};
+use crate::attributes::{self, NaughtyAttribute, ParseContext};
 
 impl PropertyDescriptor {
     fn plain(info: &PropertyInfo) -> Self {
@@ -31,7 +30,7 @@ impl PropertyDescriptor {
 
     fn claimed(
         info: &PropertyInfo,
-        annotation: &ParsedAnnotation,
+        annotation: &PropertyAnnotation,
         metas: Vec<MetaAttribute>,
     ) -> Self {
         Self {
@@ -98,7 +97,7 @@ impl ClassDescriptor {
             }
 
             let annotation =
-                parser::parse_annotation(&property.hint_string, attributes::is_known_key);
+                PropertyAnnotation::parse(&property.hint_string, attributes::is_known_key);
 
             for key in &annotation.unknown_keys {
                 godot_warn!(
