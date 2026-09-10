@@ -10,7 +10,7 @@ use crate::parser::{self, ParsedHint};
 
 impl PropertyDescriptor {
     pub fn is_naughty(&self) -> bool {
-        !self.metas.is_empty()
+        self.claimed
     }
 }
 
@@ -20,6 +20,7 @@ pub struct PropertyDescriptor {
     pub hint: PropertyHint,
     pub hint_string: GString,
     pub usage: PropertyUsageFlags,
+    pub claimed: bool,
     pub metas: Vec<MetaAttribute>,
 }
 
@@ -64,6 +65,7 @@ pub fn parse_object(object: &Gd<Object>) -> ClassDescriptor {
                 hint,
                 hint_string: GString::from(hint_string.as_str()),
                 usage,
+                claimed: false,
                 metas: Vec::new(),
             });
             continue;
@@ -82,6 +84,7 @@ pub fn parse_object(object: &Gd<Object>) -> ClassDescriptor {
                 hint: PropertyHint::NONE,
                 hint_string: GString::new(),
                 usage,
+                claimed: false,
                 metas: Vec::new(),
             });
             continue;
@@ -107,6 +110,7 @@ pub fn parse_object(object: &Gd<Object>) -> ClassDescriptor {
             hint: builtin_hint(&parsed),
             hint_string: builtin_hint_string(&parsed),
             usage,
+            claimed: true,
             metas,
         });
     }

@@ -18,7 +18,7 @@ use crate::editor_gui;
 struct InspectorState {
     descriptor: Option<Rc<ClassDescriptor>>,
     object: Option<Gd<Object>>,
-    editors: HashMap<StringName, Gd<EditorProperty>>,
+    property_editors: HashMap<StringName, Gd<EditorProperty>>,
     pending: Option<Gd<Control>>,
 }
 
@@ -53,7 +53,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             let mut state = self.state.borrow_mut();
             state.descriptor = Some(descriptor.clone());
             state.object = Some(object.clone());
-            state.editors.clear();
+            state.property_editors.clear();
             state.pending = Some(container.clone());
         }
 
@@ -105,6 +105,18 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
 #[godot_api]
 impl NaughtyEditorInspectorPlugin {
     #[func]
+    fn sync_property_editors(&self) {
+        let state = self.state.borrow();
+        for editor in state.property_editors.values() {
+            if editor.is_instance_valid() {
+                editor.clone().update_property();
+            }
+        }
+        drop(state);
+        self.refresh_conditions();
+    }
+
+    #[func]
     fn refresh_conditions(&self) {
         let state = self.state.borrow();
         let (Some(object), Some(descriptor)) = (state.object.as_ref(), state.descriptor.as_ref())
@@ -113,7 +125,7 @@ impl NaughtyEditorInspectorPlugin {
         };
 
         for property in &descriptor.properties {
-            let Some(editor) = state.editors.get(&property.name) else {
+            let Some(editor) = state.property_editors.get(&property.name) else {
                 continue;
             };
 
@@ -158,7 +170,7 @@ impl NaughtyEditorInspectorPlugin {
         self.cache.borrow_mut().clear();
         let mut state = self.state.borrow_mut();
         state.descriptor = None;
-        state.editors.clear();
+        state.property_editors.clear();
     }
 }
 
@@ -181,7 +193,7 @@ fn populate(
         connect_changed(&mut editor, object, plugin_id);
         state
             .borrow_mut()
-            .editors
+            .property_editors
             .insert(property.name.clone(), editor);
     }
 }
