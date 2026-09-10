@@ -1,10 +1,14 @@
+[workspace]
+members = ["na_macros"]
+
 [package]
 name = "naughtyattributes"
 version = "0.1.0"
 edition = "2024"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 godot = "0.5.5"
+na_macros = { path = "na_macros" }
