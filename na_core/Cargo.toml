@@ -7,4 +7,3 @@ publish = false
 
 [dependencies]
 godot.workspace = true
-na_macros.workspace = true
