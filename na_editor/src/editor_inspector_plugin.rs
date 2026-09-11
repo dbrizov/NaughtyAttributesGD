@@ -11,6 +11,8 @@ use godot::register::info::{PropertyHint, PropertyUsageFlags};
 
 use na_core::descriptor::ClassDescriptor;
 
+use crate::property_changes;
+use crate::property_editors;
 use crate::property_utils;
 
 #[derive(Default)]
@@ -59,14 +61,18 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
         let plugin_id = self.base().instance_id();
         let mut container = container;
 
-        Callable::from_fn("build_property_editors", move |_args| {
-            property_editors::build_property_editors(
-                &mut container,
-                &object,
-                &class,
-                &state,
-                plugin_id,
-            );
+        Callable::from_fn("create_property_editors", move |_args| {
+            if !container.is_instance_valid() {
+                return Variant::nil();
+            }
+
+            let mut editors =
+                property_editors::create_property_editors(&mut container, &object, &class);
+            for editor in editors.values_mut() {
+                property_changes::connect_property_changed(editor, &object, &class, plugin_id);
+            }
+
+            state.borrow_mut().property_editors = editors;
             Variant::nil()
         })
         .call_deferred(&[]);
@@ -187,100 +193,5 @@ impl NaughtyEditorInspectorPlugin {
             return;
         };
         self.base_mut().add_custom_control(&container);
-    }
-}
-
-mod property_editors {
-    use std::cell::RefCell;
-    use std::rc::Rc;
-
-    use godot::classes::{Control, EditorProperty};
-    use godot::obj::InstanceId;
-    use godot::prelude::*;
-    use na_core::descriptor::ClassDescriptor;
-
-    use crate::edit_action::EditAction;
-    use crate::property_utils;
-
-    use super::InspectorState;
-    use super::NaughtyEditorInspectorPlugin;
-
-    pub fn build_property_editors(
-        container: &mut Gd<Control>,
-        object: &Gd<Object>,
-        class: &Rc<ClassDescriptor>,
-        state: &Rc<RefCell<InspectorState>>,
-        plugin_id: InstanceId,
-    ) {
-        if !container.is_instance_valid() {
-            return;
-        }
-
-        let mut edit_action = EditAction::new(object);
-
-        for property in &class.properties {
-            let Some(mut property_editor) =
-                property_utils::draw(container, &mut edit_action, object, property)
-            else {
-                continue;
-            };
-
-            connect_property_changed(&mut property_editor, object, class, plugin_id);
-            state
-                .borrow_mut()
-                .property_editors
-                .insert(property.name.clone(), property_editor);
-        }
-
-        edit_action.commit(&format!("Validate {}", class.category));
-    }
-
-    fn connect_property_changed(
-        editor: &mut Gd<EditorProperty>,
-        object: &Gd<Object>,
-        class: &Rc<ClassDescriptor>,
-        plugin_id: InstanceId,
-    ) {
-        let object = object.clone();
-        let class = class.clone();
-        let callable = Callable::from_linked_fn("naughty_property_changed", editor, move |args| {
-            apply_property_change(&object, &class, args, plugin_id);
-            Variant::nil()
-        });
-
-        editor.connect("property_changed", &callable);
-    }
-
-    fn apply_property_change(
-        object: &Gd<Object>,
-        class: &ClassDescriptor,
-        args: &[&Variant],
-        plugin_id: InstanceId,
-    ) {
-        let (Some(name), Some(value)) = (args.first(), args.get(1)) else {
-            return;
-        };
-
-        let name = name.to::<StringName>();
-        let mut edit_action = EditAction::new(object);
-        edit_action.set_property_value(&name, value);
-        property_utils::validate_properties(&mut edit_action, object, &class.properties);
-
-        let value_was_clamped = object.get(&name) != **value;
-        let mut changed_other_properties = false;
-        if let Some(changed_properties) = edit_action.commit(&format!("Set {name}")) {
-            changed_other_properties = changed_properties.iter().any(|property| property != &name);
-        }
-
-        if let Ok(mut plugin) = Gd::<NaughtyEditorInspectorPlugin>::try_from_instance_id(plugin_id)
-        {
-            let method = if value_was_clamped || changed_other_properties {
-                "sync_property_editors"
-            } else {
-                "refresh_conditions"
-            };
-
-            plugin.call_deferred(method, &[]);
-        }
     }
 }

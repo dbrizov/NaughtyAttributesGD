@@ -1,7 +1,9 @@
 mod attribute_registry;
-mod edit_action;
 mod editor_inspector_plugin;
 mod editor_plugin;
+mod property_changes;
+mod property_edit_action;
+mod property_editors;
 mod property_utils;
 mod validators;
 mod variant_utils;

@@ -8,12 +8,12 @@ struct PropertyEdit {
     new_value: Variant,
 }
 
-pub struct EditAction {
+pub struct PropertyEditAction {
     object: Gd<Object>,
     edits: Vec<PropertyEdit>,
 }
 
-impl EditAction {
+impl PropertyEditAction {
     pub fn new(object: &Gd<Object>) -> Self {
         Self {
             object: object.clone(),
