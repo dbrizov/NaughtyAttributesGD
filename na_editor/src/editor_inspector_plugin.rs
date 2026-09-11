@@ -3,9 +3,8 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use godot::classes::{
-    Control, EditorInspectorPlugin, EditorProperty, IEditorInspectorPlugin, Script, VBoxContainer,
+    Control, EditorInspectorPlugin, EditorProperty, IEditorInspectorPlugin, VBoxContainer,
 };
-use godot::obj::InstanceId;
 use godot::prelude::*;
 use godot::register::info::{PropertyHint, PropertyUsageFlags};
 
@@ -24,7 +23,6 @@ struct InspectorState {
 #[derive(GodotClass)]
 #[class(tool, init, base = EditorInspectorPlugin)]
 pub struct NaughtyEditorInspectorPlugin {
-    cache: RefCell<HashMap<InstanceId, Rc<ClassDescriptor>>>,
     state: Rc<RefCell<InspectorState>>,
     base: Base<EditorInspectorPlugin>,
 }
@@ -147,19 +145,7 @@ impl NaughtyEditorInspectorPlugin {
 
 impl NaughtyEditorInspectorPlugin {
     fn create_class(&self, object: &Gd<Object>) -> Option<Rc<ClassDescriptor>> {
-        let script = object.get("script").try_to::<Gd<Script>>().ok()?;
-        let key = script.instance_id();
-
-        let cached = self.cache.borrow().get(&key).cloned();
-        let class = match cached {
-            Some(class) => class,
-            None => {
-                let parsed = Rc::new(ClassDescriptor::from_object(object));
-                self.cache.borrow_mut().insert(key, parsed.clone());
-                parsed
-            }
-        };
-
+        let class = Rc::new(ClassDescriptor::from_object(object));
         class.is_naughty().then_some(class)
     }
 
@@ -168,13 +154,6 @@ impl NaughtyEditorInspectorPlugin {
             return;
         };
         self.base_mut().add_custom_control(&container);
-    }
-
-    pub fn invalidate_cache(&self) {
-        self.cache.borrow_mut().clear();
-        let mut state = self.state.borrow_mut();
-        state.class = None;
-        state.property_editors.clear();
     }
 }
 
