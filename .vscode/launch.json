@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Godot Editor (Windows)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "D:/Engines/Godot/Godot_v4.7.2-stable_win64.exe",
+            "args": ["--editor", "--path", "demo"],
+            "cwd": "${workspaceFolder}",
+            "symbolSearchPath": "${workspaceFolder}/target/debug",
+            "preLaunchTask": "cargo build"
+        },
+        {
+            "name": "Attach to Godot (Windows)",
+            "type": "cppvsdbg",
+            "request": "attach",
+            "processId": "${command:pickProcess}",
+            "symbolSearchPath": "${workspaceFolder}/target/debug"
+        },
+        {
+            "name": "Godot Editor (LLDB)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${env:GODOT}",
+            "args": ["--editor", "--path", "demo"],
+            "cwd": "${workspaceFolder}",
+            "sourceLanguages": ["rust"],
+            "preLaunchTask": "cargo build"
+        },
+        {
+            "name": "Attach to Godot (LLDB)",
+            "type": "lldb",
+            "request": "attach",
+            "pid": "${command:pickMyProcess}",
+            "sourceLanguages": ["rust"]
+        }
+    ]
+}
