@@ -31,7 +31,7 @@ pub struct NaughtyEditorInspectorPlugin {
 impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
     fn can_handle(&self, object: Option<Gd<Object>>) -> bool {
         object
-            .and_then(|object| self.create_class(&object))
+            .and_then(|object| self.create_naughty_class(&object))
             .is_some()
     }
 
@@ -40,7 +40,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             return;
         };
 
-        let Some(class) = self.create_class(&object) else {
+        let Some(class) = self.create_naughty_class(&object) else {
             return;
         };
 
@@ -100,7 +100,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
         _wide: bool,
     ) -> bool {
         object
-            .and_then(|object| self.create_class(&object))
+            .and_then(|object| self.create_naughty_class(&object))
             .is_some_and(|class| class.find(&StringName::from(&name)).is_some())
     }
 }
@@ -145,7 +145,7 @@ impl NaughtyEditorInspectorPlugin {
 
 impl NaughtyEditorInspectorPlugin {
     /// Returns `None` if the object's script is not naughty.
-    fn create_class(&self, object: &Gd<Object>) -> Option<Rc<ClassDescriptor>> {
+    fn create_naughty_class(&self, object: &Gd<Object>) -> Option<Rc<ClassDescriptor>> {
         let class = Rc::new(ClassDescriptor::from_object(object));
         class.is_naughty().then_some(class)
     }
