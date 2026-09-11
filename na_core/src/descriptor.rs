@@ -15,7 +15,7 @@ impl PropertyDescriptor {
             name: StringName::from(info.name.as_str()),
             variant_type: info.variant_type,
             hint: info.hint,
-            hint_string: GString::from(info.hint_string.as_str()),
+            hint_text: GString::from(info.hint_text.as_str()),
             usage: info.usage,
             claimed: false,
             metas: Vec::new(),
@@ -26,15 +26,15 @@ impl PropertyDescriptor {
     fn unclaimed(info: &PropertyInfo) -> Self {
         Self {
             hint: PropertyHint::NONE,
-            hint_string: GString::new(),
+            hint_text: GString::new(),
             ..Self::plain(info)
         }
     }
 
     fn claimed(info: &PropertyInfo, annotation: &PropertyAnnotation) -> Self {
         Self {
-            hint: annotation.builtin_hint(),
-            hint_string: annotation.builtin_hint_string(),
+            hint: annotation.get_builtin_hint(),
+            hint_text: annotation.get_builtin_hint_text(),
             claimed: true,
             ..Self::plain(info)
         }
@@ -49,7 +49,7 @@ struct PropertyInfo {
     name: String,
     variant_type: VariantType,
     hint: PropertyHint,
-    hint_string: String,
+    hint_text: String,
     usage: PropertyUsageFlags,
 }
 
@@ -57,7 +57,7 @@ pub struct PropertyDescriptor {
     pub name: StringName,
     pub variant_type: VariantType,
     pub hint: PropertyHint,
-    pub hint_string: GString,
+    pub hint_text: GString,
     pub usage: PropertyUsageFlags,
     pub claimed: bool,
     pub metas: Vec<MetaAttribute>,
@@ -73,8 +73,8 @@ struct ScriptSnapshot {
 impl ScriptSnapshot {
     fn from_object(object: &Gd<Object>) -> Self {
         Self {
-            property_list: script_property_list(object),
-            constants: merged_constants(object),
+            property_list: get_script_property_list(object),
+            constants: get_constants(object),
         }
     }
 }
@@ -89,7 +89,7 @@ pub struct ClassDescriptor {
 impl ClassDescriptor {
     pub fn from_object(object: &Gd<Object>) -> ClassDescriptor {
         let script_snapshot = ScriptSnapshot::from_object(object);
-        let script_path = script_path(object);
+        let script_path = get_script_path(object);
         let mut properties = Vec::new();
 
         for info in &script_snapshot.property_list {
@@ -102,17 +102,17 @@ impl ClassDescriptor {
                 name: info.at("name").to::<GString>().to_string(),
                 variant_type: info.at("type").to(),
                 hint: info.at("hint").to(),
-                hint_string: info.at("hint_string").to::<GString>().to_string(),
+                hint_text: info.at("hint_string").to::<GString>().to_string(),
                 usage,
             };
 
-            if property_info.hint != PropertyHint::NONE || property_info.hint_string.is_empty() {
+            if property_info.hint != PropertyHint::NONE || property_info.hint_text.is_empty() {
                 properties.push(PropertyDescriptor::plain(&property_info));
                 continue;
             }
 
             let annotation =
-                PropertyAnnotation::parse(&property_info.hint_string, attributes::is_known_key);
+                PropertyAnnotation::parse(&property_info.hint_text, attributes::is_known_key);
 
             for key in &annotation.unknown_keys {
                 na_error!(
@@ -187,7 +187,7 @@ fn is_editor_property(usage: PropertyUsageFlags) -> bool {
     usage.is_set(PropertyUsageFlags::EDITOR) && (usage.ord() & excluded.ord()) == 0
 }
 
-pub fn script_path(object: &Gd<Object>) -> String {
+pub fn get_script_path(object: &Gd<Object>) -> String {
     object
         .get("script")
         .try_to::<Gd<Script>>()
@@ -195,7 +195,7 @@ pub fn script_path(object: &Gd<Object>) -> String {
         .unwrap_or_default()
 }
 
-fn script_property_list(object: &Gd<Object>) -> Vec<VarDictionary> {
+fn get_script_property_list(object: &Gd<Object>) -> Vec<VarDictionary> {
     let Ok(script) = object.get("script").try_to::<Gd<Script>>() else {
         return Vec::new();
     };
@@ -217,8 +217,8 @@ fn script_property_list(object: &Gd<Object>) -> Vec<VarDictionary> {
     properties
 }
 
-fn merged_constants(object: &Gd<Object>) -> VarDictionary {
-    let mut merged = VarDictionary::new();
+fn get_constants(object: &Gd<Object>) -> VarDictionary {
+    let mut constants = VarDictionary::new();
     let mut chain = Vec::new();
     let mut current = object.get("script").try_to::<Gd<Script>>().ok();
 
@@ -229,9 +229,9 @@ fn merged_constants(object: &Gd<Object>) -> VarDictionary {
 
     for script in chain.iter().rev() {
         for (key, value) in script.get_script_constant_map().iter_shared() {
-            merged.set(&key, &value);
+            constants.set(&key, &value);
         }
     }
 
-    merged
+    constants
 }

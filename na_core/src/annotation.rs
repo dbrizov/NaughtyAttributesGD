@@ -85,14 +85,14 @@ impl PropertyAnnotation {
         annotation
     }
 
-    pub fn builtin_hint(&self) -> PropertyHint {
+    pub fn get_builtin_hint(&self) -> PropertyHint {
         self.builtin
             .as_ref()
             .and_then(|(key, _)| builtin_hint_from_key(key))
             .unwrap_or(PropertyHint::NONE)
     }
 
-    pub fn builtin_hint_string(&self) -> GString {
+    pub fn get_builtin_hint_text(&self) -> GString {
         match &self.builtin {
             Some((_, raw_args)) => GString::from(raw_args.as_str()),
             None => GString::new(),

@@ -13,7 +13,7 @@ pub fn is_visible(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
         MetaAttribute::ShowIf(condition) => condition.is_visible(object).unwrap_or_else(|error| {
             na_error!(
                 "{}.{} - {}: {error}",
-                descriptor::script_path(object),
+                descriptor::get_script_path(object),
                 property.name,
                 show_if::KEY
             );
@@ -34,9 +34,9 @@ pub fn validate_property(
             Err(error) => {
                 na_error!(
                     "{}.{} - {}: {error}",
-                    descriptor::script_path(object),
+                    descriptor::get_script_path(object),
                     property.name,
-                    attribute.key()
+                    attribute.get_key()
                 );
             }
         }

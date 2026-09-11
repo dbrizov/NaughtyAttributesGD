@@ -19,7 +19,7 @@ impl ValidatorAttribute {
         matches!(key, min_value::KEY)
     }
 
-    pub fn key(&self) -> &'static str {
+    pub fn get_key(&self) -> &'static str {
         match self {
             Self::MinValue(_) => min_value::KEY,
         }

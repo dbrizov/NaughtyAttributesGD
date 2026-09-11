@@ -36,7 +36,7 @@ impl MinValue {
 
         let min_value = Expression::compile(source, context.constants);
         if !min_value.is_valid() {
-            return Err(min_value.error().to_string());
+            return Err(min_value.get_error().to_string());
         }
 
         Ok(Self { min_value })

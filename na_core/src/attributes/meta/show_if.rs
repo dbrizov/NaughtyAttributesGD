@@ -19,7 +19,7 @@ impl ShowIf {
 
         let condition = Expression::compile(source, context.constants);
         if !condition.is_valid() {
-            return Err(condition.error().to_string());
+            return Err(condition.get_error().to_string());
         }
 
         Ok(Self { condition })

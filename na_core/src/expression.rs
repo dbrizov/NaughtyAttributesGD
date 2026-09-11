@@ -42,15 +42,15 @@ impl Expression {
         }
     }
 
-    pub fn expression_text(&self) -> &str {
-        &self.expression_text
-    }
-
     pub fn is_valid(&self) -> bool {
         self.valid
     }
 
-    pub fn error(&self) -> &str {
+    pub fn get_expression_text(&self) -> &str {
+        &self.expression_text
+    }
+
+    pub fn get_error(&self) -> &str {
         &self.error
     }
 
@@ -72,7 +72,7 @@ impl Expression {
                 "'{}' - {}{}",
                 self.expression_text,
                 expression.get_error_text(),
-                tool_hint(object, &self.expression_text)
+                get_tool_hint(object, &self.expression_text)
             ));
         }
 
@@ -98,7 +98,7 @@ impl Expression {
     }
 }
 
-fn tool_hint(object: &Gd<Object>, expression_text: &str) -> &'static str {
+fn get_tool_hint(object: &Gd<Object>, expression_text: &str) -> &'static str {
     if !expression_text.contains('(') {
         return "";
     }

@@ -26,7 +26,7 @@ fn create_property_editor(
         property.variant_type,
         &GString::from(&property.name),
         property.hint,
-        &property.hint_string,
+        &property.hint_text,
         property.usage.ord() as u32,
     );
 
