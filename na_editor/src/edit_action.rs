@@ -40,7 +40,8 @@ impl EditAction {
         }
     }
 
-    pub fn commit(self, action_name: &str) {
+    /// Returns the names of the changed properties, or `None` if nothing changed.
+    pub fn commit(self, action_name: &str) -> Option<Vec<StringName>> {
         let edits: Vec<PropertyEdit> = self
             .edits
             .into_iter()
@@ -48,11 +49,13 @@ impl EditAction {
             .collect();
 
         if edits.is_empty() {
-            return;
+            return None;
         }
 
+        let changed_properties = Some(edits.iter().map(|edit| edit.name.clone()).collect());
+
         let Some(mut undo_redo) = EditorInterface::singleton().get_editor_undo_redo() else {
-            return;
+            return changed_properties;
         };
 
         undo_redo
@@ -66,5 +69,7 @@ impl EditAction {
             undo_redo.add_undo_property(&self.object, &edit.name, &edit.old_value);
         }
         undo_redo.commit_action_ex().execute(false).done();
+
+        changed_properties
     }
 }

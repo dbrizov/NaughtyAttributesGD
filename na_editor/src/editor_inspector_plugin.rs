@@ -233,16 +233,20 @@ mod property_editors {
         edit_action.set_property_value(&name, value);
         property_utils::validate_properties(&mut edit_action, object, &class.properties);
 
-        let corrected = object.get(&name) != **value;
-        edit_action.commit(&format!("Set {name}"));
+        let value_was_clamped = object.get(&name) != **value;
+        let mut changed_other_properties = false;
+        if let Some(changed_properties) = edit_action.commit(&format!("Set {name}")) {
+            changed_other_properties = changed_properties.iter().any(|property| property != &name);
+        }
 
         if let Ok(mut plugin) = Gd::<NaughtyEditorInspectorPlugin>::try_from_instance_id(plugin_id)
         {
-            let method = if corrected {
+            let method = if value_was_clamped || changed_other_properties {
                 "sync_property_editors"
             } else {
                 "refresh_conditions"
             };
+
             plugin.call_deferred(method, &[]);
         }
     }
