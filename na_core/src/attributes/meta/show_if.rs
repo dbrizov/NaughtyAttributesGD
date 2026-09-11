@@ -2,13 +2,12 @@ use godot::classes::Object;
 use godot::prelude::*;
 
 use crate::attributes::ParseContext;
-use crate::condition::Condition;
-use crate::member;
+use crate::expression::Expression;
 
 pub const KEY: &str = "show_if";
 
 pub struct ShowIf {
-    condition: Condition,
+    condition: Expression,
 }
 
 impl ShowIf {
@@ -19,7 +18,7 @@ impl ShowIf {
             return None;
         }
 
-        let condition = Condition::compile(source, context.constants);
+        let condition = Expression::compile(source, context.constants);
         if !condition.is_valid() {
             context.warn(KEY, condition.error());
         }
@@ -28,27 +27,18 @@ impl ShowIf {
     }
 
     pub fn is_visible(&self, object: &Gd<Object>) -> bool {
-        match self.condition.evaluate(object) {
+        match self.condition.evaluate_bool(object) {
             Ok(visible) => visible,
             Err(error) => {
                 godot_warn!(
-                    "{} {} '{}' - {}{}",
+                    "{} {} '{}' - {}",
                     crate::LOG_PREFIX,
                     KEY,
                     self.condition.expression_text(),
-                    error,
-                    tool_hint(object, self.condition.expression_text())
+                    error
                 );
                 true
             }
         }
     }
-}
-
-fn tool_hint(object: &Gd<Object>, expression_text: &str) -> &'static str {
-    if !expression_text.contains('(') {
-        return "";
-    }
-
-    member::tool_hint(object)
 }

@@ -9,7 +9,7 @@ use crate::variant_utils;
 
 impl IValidator for MinValue {
     fn validate(&self, object: &Gd<Object>, property: &PropertyDescriptor) -> Option<Variant> {
-        let min = match self.bound.resolve(object) {
+        let min = match self.min_value.evaluate_number(object) {
             Ok(min) => min,
             Err(error) => {
                 attributes::warn(object, &property.name, KEY, &error);

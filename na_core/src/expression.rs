@@ -1,15 +1,16 @@
-use godot::classes::{Expression, Object};
+use godot::classes::{Expression as GodotExpression, Object, Script};
+use godot::global::type_string;
 use godot::prelude::*;
 
-pub struct Condition {
+pub struct Expression {
     expression_text: String,
-    expression: Gd<Expression>,
+    expression: Gd<GodotExpression>,
     inputs: VarArray,
     valid: bool,
     error: String,
 }
 
-impl Condition {
+impl Expression {
     pub fn compile(expression_text: &str, constants: &VarDictionary) -> Self {
         let mut input_names = PackedStringArray::new();
         let mut inputs = VarArray::new();
@@ -19,7 +20,7 @@ impl Condition {
             inputs.push(&value);
         }
 
-        let mut expression = Expression::new_gd();
+        let mut expression = GodotExpression::new_gd();
         let error = expression
             .parse_ex(&GString::from(&normalize_operators(expression_text)))
             .input_names(&input_names)
@@ -53,7 +54,7 @@ impl Condition {
         &self.error
     }
 
-    pub fn evaluate(&self, object: &Gd<Object>) -> Result<bool, String> {
+    pub fn evaluate(&self, object: &Gd<Object>) -> Result<Variant, String> {
         if !self.valid {
             return Err(self.error.clone());
         }
@@ -67,10 +68,50 @@ impl Condition {
             .done();
 
         if expression.has_execute_failed() {
-            return Err(expression.get_error_text().to_string());
+            return Err(format!(
+                "{}{}",
+                expression.get_error_text(),
+                tool_hint(object, &self.expression_text)
+            ));
         }
 
-        Ok(result.booleanize())
+        Ok(result)
+    }
+
+    pub fn evaluate_bool(&self, object: &Gd<Object>) -> Result<bool, String> {
+        self.evaluate(object).map(|value| value.booleanize())
+    }
+
+    pub fn evaluate_number(&self, object: &Gd<Object>) -> Result<f64, String> {
+        let value = self.evaluate(object)?;
+
+        match value.get_type() {
+            VariantType::INT => Ok(value.to::<i64>() as f64),
+            VariantType::FLOAT => Ok(value.to::<f64>()),
+            other => Err(format!(
+                "'{}' is {}, not a number",
+                self.expression_text,
+                type_string(other.ord() as i64)
+            )),
+        }
+    }
+}
+
+fn tool_hint(object: &Gd<Object>, expression_text: &str) -> &'static str {
+    if !expression_text.contains('(') {
+        return "";
+    }
+
+    let is_tool = object
+        .get("script")
+        .try_to::<Gd<Script>>()
+        .map(|script| script.is_tool())
+        .unwrap_or(true);
+
+    if is_tool {
+        ""
+    } else {
+        " (calling a method needs @tool on the script)"
     }
 }
 
