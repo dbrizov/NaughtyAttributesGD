@@ -1,27 +1,39 @@
 pub mod meta;
+pub mod validator;
 
+use godot::classes::Object;
 use godot::prelude::*;
 
 use crate::LOG_PREFIX;
+use crate::descriptor;
 use meta::MetaAttribute;
+use validator::ValidatorAttribute;
 
 pub enum NaughtyAttribute {
     Meta(MetaAttribute),
+    Validator(ValidatorAttribute),
 }
 
 impl NaughtyAttribute {
     pub fn parse(key: &str, raw_args: &str, context: &ParseContext) -> Option<Self> {
-        MetaAttribute::parse(key, raw_args, context).map(Self::Meta)
+        if MetaAttribute::is_known_key(key) {
+            MetaAttribute::parse(key, raw_args, context).map(Self::Meta)
+        } else if ValidatorAttribute::is_known_key(key) {
+            ValidatorAttribute::parse(key, raw_args, context).map(Self::Validator)
+        } else {
+            None
+        }
     }
 }
 
 pub fn is_known_key(key: &str) -> bool {
-    MetaAttribute::is_known_key(key)
+    MetaAttribute::is_known_key(key) || ValidatorAttribute::is_known_key(key)
 }
 
 pub struct ParseContext<'a> {
     pub script_path: &'a str,
     pub property: &'a str,
+    pub variant_type: VariantType,
     pub constants: &'a VarDictionary,
 }
 
@@ -36,4 +48,15 @@ impl ParseContext<'_> {
             message
         );
     }
+}
+
+pub fn warn(object: &Gd<Object>, property: &StringName, key: &str, message: &str) {
+    godot_warn!(
+        "{} {}.{} - {}: {}",
+        LOG_PREFIX,
+        descriptor::script_path(object),
+        property,
+        key,
+        message
+    );
 }

@@ -8,12 +8,14 @@ use godot::classes::{
 use godot::obj::InstanceId;
 use godot::prelude::*;
 use godot::register::info::{PropertyHint, PropertyUsageFlags};
-use na_core::attributes::meta;
+
 use na_core::descriptor::ClassDescriptor;
+
+use crate::property_utils;
 
 #[derive(Default)]
 struct InspectorState {
-    descriptor: Option<Rc<ClassDescriptor>>,
+    class: Option<Rc<ClassDescriptor>>,
     object: Option<Gd<Object>>,
     property_editors: HashMap<StringName, Gd<EditorProperty>>,
     pending_container: Option<Gd<Control>>,
@@ -31,7 +33,7 @@ pub struct NaughtyEditorInspectorPlugin {
 impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
     fn can_handle(&self, object: Option<Gd<Object>>) -> bool {
         object
-            .and_then(|object| self.descriptor_from_object(&object))
+            .and_then(|object| self.create_class(&object))
             .is_some()
     }
 
@@ -40,7 +42,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             return;
         };
 
-        let Some(descriptor) = self.descriptor_from_object(&object) else {
+        let Some(class) = self.create_class(&object) else {
             return;
         };
 
@@ -48,7 +50,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
 
         {
             let mut state = self.state.borrow_mut();
-            state.descriptor = Some(descriptor.clone());
+            state.class = Some(class.clone());
             state.object = Some(object.clone());
             state.property_editors.clear();
             state.pending_container = Some(container.clone());
@@ -62,7 +64,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             property_editors::build_property_editors(
                 &mut container,
                 &object,
-                &descriptor,
+                &class,
                 &state,
                 plugin_id,
             );
@@ -79,9 +81,9 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
         let matches = {
             let state = self.state.borrow();
             state
-                .descriptor
+                .class
                 .as_ref()
-                .is_some_and(|descriptor| descriptor.category == category.to_string())
+                .is_some_and(|class| class.category == category.to_string())
         };
 
         if matches {
@@ -100,8 +102,8 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
         _wide: bool,
     ) -> bool {
         object
-            .and_then(|object| self.descriptor_from_object(&object))
-            .is_some_and(|descriptor| descriptor.find(&StringName::from(&name)).is_some())
+            .and_then(|object| self.create_class(&object))
+            .is_some_and(|class| class.find(&StringName::from(&name)).is_some())
     }
 }
 
@@ -122,12 +124,11 @@ impl NaughtyEditorInspectorPlugin {
     #[func]
     fn refresh_conditions(&self) {
         let state = self.state.borrow();
-        let (Some(object), Some(descriptor)) = (state.object.as_ref(), state.descriptor.as_ref())
-        else {
+        let (Some(object), Some(class)) = (state.object.as_ref(), state.class.as_ref()) else {
             return;
         };
 
-        for property in &descriptor.properties {
+        for property in &class.properties {
             let Some(editor) = state.property_editors.get(&property.name) else {
                 continue;
             };
@@ -136,7 +137,7 @@ impl NaughtyEditorInspectorPlugin {
                 continue;
             }
 
-            let visible = meta::is_visible(&property.metas, object);
+            let visible = property_utils::is_visible(object, property);
             if editor.is_visible() != visible {
                 editor.clone().set_visible(visible);
             }
@@ -145,13 +146,13 @@ impl NaughtyEditorInspectorPlugin {
 }
 
 impl NaughtyEditorInspectorPlugin {
-    fn descriptor_from_object(&self, object: &Gd<Object>) -> Option<Rc<ClassDescriptor>> {
+    fn create_class(&self, object: &Gd<Object>) -> Option<Rc<ClassDescriptor>> {
         let script = object.get("script").try_to::<Gd<Script>>().ok()?;
         let key = script.instance_id();
 
         let cached = self.cache.borrow().get(&key).cloned();
-        let descriptor = match cached {
-            Some(descriptor) => descriptor,
+        let class = match cached {
+            Some(class) => class,
             None => {
                 let parsed = Rc::new(ClassDescriptor::from_object(object));
                 self.cache.borrow_mut().insert(key, parsed.clone());
@@ -159,7 +160,7 @@ impl NaughtyEditorInspectorPlugin {
             }
         };
 
-        descriptor.is_naughty().then_some(descriptor)
+        class.is_naughty().then_some(class)
     }
 
     fn attach_pending_container(&mut self) {
@@ -172,7 +173,7 @@ impl NaughtyEditorInspectorPlugin {
     pub fn invalidate_cache(&self) {
         self.cache.borrow_mut().clear();
         let mut state = self.state.borrow_mut();
-        state.descriptor = None;
+        state.class = None;
         state.property_editors.clear();
     }
 }
@@ -181,20 +182,21 @@ mod property_editors {
     use std::cell::RefCell;
     use std::rc::Rc;
 
-    use godot::classes::{Control, EditorInterface, EditorProperty};
+    use godot::classes::{Control, EditorProperty};
     use godot::obj::InstanceId;
     use godot::prelude::*;
     use na_core::descriptor::ClassDescriptor;
 
-    use crate::editor_gui;
+    use crate::edit_action::EditAction;
+    use crate::property_utils;
 
     use super::InspectorState;
     use super::NaughtyEditorInspectorPlugin;
 
-    pub(super) fn build_property_editors(
+    pub fn build_property_editors(
         container: &mut Gd<Control>,
         object: &Gd<Object>,
-        descriptor: &Rc<ClassDescriptor>,
+        class: &Rc<ClassDescriptor>,
         state: &Rc<RefCell<InspectorState>>,
         plugin_id: InstanceId,
     ) {
@@ -202,57 +204,67 @@ mod property_editors {
             return;
         }
 
-        for property in &descriptor.properties {
-            let Some(mut property_editor) = editor_gui::draw_property(container, object, property)
+        let mut edit_action = EditAction::new(object);
+
+        for property in &class.properties {
+            let Some(mut property_editor) =
+                property_utils::draw(container, &mut edit_action, object, property)
             else {
                 continue;
             };
 
-            connect_property_changed(&mut property_editor, object, plugin_id);
+            connect_property_changed(&mut property_editor, object, class, plugin_id);
             state
                 .borrow_mut()
                 .property_editors
                 .insert(property.name.clone(), property_editor);
         }
+
+        edit_action.commit(&format!("Validate {}", class.category));
     }
 
     fn connect_property_changed(
         editor: &mut Gd<EditorProperty>,
         object: &Gd<Object>,
+        class: &Rc<ClassDescriptor>,
         plugin_id: InstanceId,
     ) {
         let object = object.clone();
+        let class = class.clone();
         let callable = Callable::from_linked_fn("naughty_property_changed", editor, move |args| {
-            apply_property_change(&object, args, plugin_id);
+            apply_property_change(&object, &class, args, plugin_id);
             Variant::nil()
         });
 
         editor.connect("property_changed", &callable);
     }
 
-    fn apply_property_change(object: &Gd<Object>, args: &[&Variant], plugin_id: InstanceId) {
+    fn apply_property_change(
+        object: &Gd<Object>,
+        class: &ClassDescriptor,
+        args: &[&Variant],
+        plugin_id: InstanceId,
+    ) {
         let (Some(name), Some(value)) = (args.first(), args.get(1)) else {
             return;
         };
 
         let name = name.to::<StringName>();
-        let Some(mut undo_redo) = EditorInterface::singleton().get_editor_undo_redo() else {
-            return;
-        };
+        let mut edit_action = EditAction::new(object);
+        edit_action.set_property_value(&name, value);
+        property_utils::validate_properties(&mut edit_action, object, &class.properties);
 
-        let previous = object.get(&name);
-        if previous == **value {
-            return;
-        }
-
-        undo_redo.create_action(&GString::from(&format!("Set {name}")));
-        undo_redo.add_do_property(object, &name, value);
-        undo_redo.add_undo_property(object, &name, &previous);
-        undo_redo.commit_action();
+        let corrected = object.get(&name) != **value;
+        edit_action.commit(&format!("Set {name}"));
 
         if let Ok(mut plugin) = Gd::<NaughtyEditorInspectorPlugin>::try_from_instance_id(plugin_id)
         {
-            plugin.call_deferred("refresh_conditions", &[]);
+            let method = if corrected {
+                "sync_property_editors"
+            } else {
+                "refresh_conditions"
+            };
+            plugin.call_deferred(method, &[]);
         }
     }
 }

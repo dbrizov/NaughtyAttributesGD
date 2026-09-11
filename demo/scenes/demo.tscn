@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ck570lf6pp743" path="res://scripts/meta_tests/show_if.gd" id="1_tqfh0"]
 [ext_resource type="Script" uid="uid://hu0b451jnsv1" path="res://scripts/builtin_test.gd" id="2_ba4lm"]
+[ext_resource type="Script" uid="uid://ikljy4h7nwfa" path="res://scripts/validator_tests/min_value.gd" id="3_mnval"]
 
 [node name="root" type="Node3D" unique_id=1486502538]
 
@@ -15,5 +16,10 @@ health = 100
 
 [node name="validator_attributes" type="Node3D" parent="." unique_id=1633452842]
 
+[node name="min_value" type="Node3D" parent="validator_attributes" unique_id=1917403352]
+script = ExtResource("3_mnval")
+floor_hp = 5
+
 [node name="builtin" type="Node3D" parent="." unique_id=1383863991]
 script = ExtResource("2_ba4lm")
+speed = 0.0

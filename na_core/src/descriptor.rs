@@ -5,6 +5,7 @@ use godot::register::info::{PropertyHint, PropertyUsageFlags};
 use crate::LOG_PREFIX;
 use crate::annotation::PropertyAnnotation;
 use crate::attributes::meta::MetaAttribute;
+use crate::attributes::validator::ValidatorAttribute;
 use crate::attributes::{self, NaughtyAttribute, ParseContext};
 
 impl PropertyDescriptor {
@@ -17,6 +18,7 @@ impl PropertyDescriptor {
             usage: info.usage,
             claimed: false,
             metas: Vec::new(),
+            validators: Vec::new(),
         }
     }
 
@@ -28,16 +30,11 @@ impl PropertyDescriptor {
         }
     }
 
-    fn claimed(
-        info: &PropertyInfo,
-        annotation: &PropertyAnnotation,
-        metas: Vec<MetaAttribute>,
-    ) -> Self {
+    fn claimed(info: &PropertyInfo, annotation: &PropertyAnnotation) -> Self {
         Self {
             hint: annotation.builtin_hint(),
             hint_string: annotation.builtin_hint_string(),
             claimed: true,
-            metas,
             ..Self::plain(info)
         }
     }
@@ -63,6 +60,7 @@ pub struct PropertyDescriptor {
     pub usage: PropertyUsageFlags,
     pub claimed: bool,
     pub metas: Vec<MetaAttribute>,
+    pub validators: Vec<ValidatorAttribute>,
 }
 
 pub struct ClassDescriptor {
@@ -83,7 +81,7 @@ impl ClassDescriptor {
                 continue;
             }
 
-            let property = PropertyInfo {
+            let property_info = PropertyInfo {
                 name: info.at("name").to::<GString>().to_string(),
                 variant_type: info.at("type").to(),
                 hint: info.at("hint").to(),
@@ -91,42 +89,45 @@ impl ClassDescriptor {
                 usage,
             };
 
-            if property.hint != PropertyHint::NONE || property.hint_string.is_empty() {
-                properties.push(PropertyDescriptor::plain(&property));
+            if property_info.hint != PropertyHint::NONE || property_info.hint_string.is_empty() {
+                properties.push(PropertyDescriptor::plain(&property_info));
                 continue;
             }
 
             let annotation =
-                PropertyAnnotation::parse(&property.hint_string, attributes::is_known_key);
+                PropertyAnnotation::parse(&property_info.hint_string, attributes::is_known_key);
 
             for key in &annotation.unknown_keys {
                 godot_warn!(
                     "{LOG_PREFIX} {script_path}.{} - unknown attribute '{key}'",
-                    property.name
+                    property_info.name
                 );
             }
 
             if !annotation.is_claimed() {
-                properties.push(PropertyDescriptor::unclaimed(&property));
+                properties.push(PropertyDescriptor::unclaimed(&property_info));
                 continue;
             }
 
             let context = ParseContext {
                 script_path: &script_path,
-                property: &property.name,
+                property: &property_info.name,
+                variant_type: property_info.variant_type,
                 constants: &constants,
             };
 
-            let mut metas = Vec::new();
+            let mut property = PropertyDescriptor::claimed(&property_info, &annotation);
             for entry in &annotation.attributes {
-                if let Some(NaughtyAttribute::Meta(meta)) =
-                    NaughtyAttribute::parse(&entry.key, &entry.raw_args, &context)
-                {
-                    metas.push(meta);
+                match NaughtyAttribute::parse(&entry.key, &entry.raw_args, &context) {
+                    Some(NaughtyAttribute::Meta(meta)) => property.metas.push(meta),
+                    Some(NaughtyAttribute::Validator(validator)) => {
+                        property.validators.push(validator)
+                    }
+                    None => {}
                 }
             }
 
-            properties.push(PropertyDescriptor::claimed(&property, &annotation, metas));
+            properties.push(property);
         }
 
         let category = script_path
@@ -201,7 +202,7 @@ fn merged_constants(object: &Gd<Object>) -> VarDictionary {
     merged
 }
 
-fn script_path(object: &Gd<Object>) -> String {
+pub fn script_path(object: &Gd<Object>) -> String {
     object
         .get("script")
         .try_to::<Gd<Script>>()

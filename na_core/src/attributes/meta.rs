@@ -1,8 +1,5 @@
 pub mod show_if;
 
-use godot::classes::Object;
-use godot::prelude::*;
-
 use crate::attributes::ParseContext;
 use show_if::ShowIf;
 
@@ -21,10 +18,4 @@ impl MetaAttribute {
     pub fn is_known_key(key: &str) -> bool {
         matches!(key, show_if::KEY)
     }
-}
-
-pub fn is_visible(metas: &[MetaAttribute], object: &Gd<Object>) -> bool {
-    metas.iter().all(|meta| match meta {
-        MetaAttribute::ShowIf(show_if) => show_if.is_visible(object),
-    })
 }

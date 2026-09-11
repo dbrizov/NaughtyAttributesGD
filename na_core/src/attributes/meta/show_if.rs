@@ -3,6 +3,7 @@ use godot::prelude::*;
 
 use crate::attributes::ParseContext;
 use crate::condition::Condition;
+use crate::member;
 
 pub const KEY: &str = "show_if";
 
@@ -49,15 +50,5 @@ fn tool_hint(object: &Gd<Object>, expression_text: &str) -> &'static str {
         return "";
     }
 
-    let is_tool = object
-        .get("script")
-        .try_to::<Gd<godot::classes::Script>>()
-        .map(|script| script.is_tool())
-        .unwrap_or(true);
-
-    if is_tool {
-        ""
-    } else {
-        " (calling a method needs @tool on the script)"
-    }
+    member::tool_hint(object)
 }
