@@ -1,7 +1,5 @@
 use godot::prelude::*;
 
-use na_logging::na_error;
-
 use crate::attributes::ParseContext;
 use crate::expression::Expression;
 
@@ -23,36 +21,24 @@ pub struct MinValue {
 }
 
 impl MinValue {
-    pub fn parse(raw_args: &str, context: &ParseContext) -> Option<Self> {
+    pub fn parse(raw_args: &str, context: &ParseContext) -> Result<Self, String> {
         if !SUPPORTED_TYPES.contains(&context.variant_type) {
-            na_error!(
-                "{}.{} - {KEY}: can be used only on int, float, Vector2/3/4 and Vector2i/3i/4i properties",
-                context.script_path,
-                context.property
+            return Err(
+                "can be used only on int, float, Vector2/3/4 and Vector2i/3i/4i properties"
+                    .to_string(),
             );
-            return None;
         }
 
         let source = raw_args.trim();
         if source.is_empty() {
-            na_error!(
-                "{}.{} - {KEY}: expected a numeric expression",
-                context.script_path,
-                context.property
-            );
-            return None;
+            return Err("expected a numeric expression".to_string());
         }
 
         let min_value = Expression::compile(source, context.constants);
         if !min_value.is_valid() {
-            na_error!(
-                "{}.{} - {KEY}: {}",
-                context.script_path,
-                context.property,
-                min_value.error()
-            );
+            return Err(min_value.error().to_string());
         }
 
-        Some(Self { min_value })
+        Ok(Self { min_value })
     }
 }

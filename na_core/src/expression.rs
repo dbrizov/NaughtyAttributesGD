@@ -69,7 +69,8 @@ impl Expression {
 
         if expression.has_execute_failed() {
             return Err(format!(
-                "{}{}",
+                "'{}' - {}{}",
+                self.expression_text,
                 expression.get_error_text(),
                 tool_hint(object, &self.expression_text)
             ));

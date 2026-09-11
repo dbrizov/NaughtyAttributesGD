@@ -1,8 +1,6 @@
 use godot::classes::Object;
 use godot::prelude::*;
 
-use na_logging::na_error;
-
 use crate::attributes::ParseContext;
 use crate::expression::Expression;
 
@@ -13,37 +11,21 @@ pub struct ShowIf {
 }
 
 impl ShowIf {
-    pub fn parse(raw_args: &str, context: &ParseContext) -> Option<Self> {
+    pub fn parse(raw_args: &str, context: &ParseContext) -> Result<Self, String> {
         let source = raw_args.trim();
         if source.is_empty() {
-            na_error!(
-                "{}.{} - {KEY}: expected a boolean expression",
-                context.script_path,
-                context.property
-            );
-            return None;
+            return Err("expected a boolean expression".to_string());
         }
 
         let condition = Expression::compile(source, context.constants);
         if !condition.is_valid() {
-            na_error!(
-                "{}.{} - {KEY}: {}",
-                context.script_path,
-                context.property,
-                condition.error()
-            );
+            return Err(condition.error().to_string());
         }
 
-        Some(Self { condition })
+        Ok(Self { condition })
     }
 
-    pub fn is_visible(&self, object: &Gd<Object>) -> bool {
-        match self.condition.evaluate_bool(object) {
-            Ok(visible) => visible,
-            Err(error) => {
-                na_error!("{KEY} '{}' - {error}", self.condition.expression_text());
-                true
-            }
-        }
+    pub fn is_visible(&self, object: &Gd<Object>) -> Result<bool, String> {
+        self.condition.evaluate_bool(object)
     }
 }

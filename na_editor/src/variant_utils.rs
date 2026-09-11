@@ -1,7 +1,8 @@
 use godot::builtin::real;
+use godot::global::type_string;
 use godot::prelude::*;
 
-pub fn clamp(value: &Variant, min: f64, max: f64) -> Option<Variant> {
+pub fn clamp(value: &Variant, min: f64, max: f64) -> Result<Variant, String> {
     let real_min = min as real;
     let real_max = max as real;
     let int_min = min.ceil();
@@ -44,8 +45,13 @@ pub fn clamp(value: &Variant, min: f64, max: f64) -> Option<Variant> {
             .coord_max(Vector4i::splat(int_min as i32))
             .coord_min(Vector4i::splat(int_max as i32))
             .to_variant(),
-        _ => return None,
+        other => {
+            return Err(format!(
+                "cannot clamp a value of type {}",
+                type_string(other.ord() as i64)
+            ));
+        }
     };
 
-    Some(clamped)
+    Ok(clamped)
 }

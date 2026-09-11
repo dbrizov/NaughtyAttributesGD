@@ -1,13 +1,14 @@
 use godot::classes::{Control, EditorInspector, EditorProperty};
 use godot::prelude::*;
 
-use na_core::attributes::meta::MetaAttribute;
-use na_core::descriptor::PropertyDescriptor;
+use na_core::attributes::meta::{MetaAttribute, show_if};
+use na_core::descriptor::{self, PropertyDescriptor};
 use na_logging::na_error;
 
 use crate::attribute_registry;
 use crate::edit_action::EditAction;
 
+/// Returns `None` if the property is hidden or Godot has no editor for it.
 pub fn draw(
     container: &mut Gd<Control>,
     edit_action: &mut EditAction,
@@ -42,9 +43,18 @@ pub fn draw(
     Some(editor)
 }
 
+/// A condition that fails to evaluate counts as visible.
 pub fn is_visible(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
     property.metas.iter().all(|meta| match meta {
-        MetaAttribute::ShowIf(show_if) => show_if.is_visible(object),
+        MetaAttribute::ShowIf(condition) => condition.is_visible(object).unwrap_or_else(|error| {
+            na_error!(
+                "{}.{} - {}: {error}",
+                descriptor::script_path(object),
+                property.name,
+                show_if::KEY
+            );
+            true
+        }),
     })
 }
 
@@ -54,9 +64,17 @@ pub fn validate_property(
     property: &PropertyDescriptor,
 ) {
     for attribute in &property.validators {
-        if let Some(value) = attribute_registry::get_validator(attribute).validate(object, property)
-        {
-            edit_action.set_property_value(&property.name, &value);
+        match attribute_registry::get_validator(attribute).validate(object, property) {
+            Ok(Some(value)) => edit_action.set_property_value(&property.name, &value),
+            Ok(None) => {}
+            Err(error) => {
+                na_error!(
+                    "{}.{} - {}: {error}",
+                    descriptor::script_path(object),
+                    property.name,
+                    attribute.key()
+                );
+            }
         }
     }
 }

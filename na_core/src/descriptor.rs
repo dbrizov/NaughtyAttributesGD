@@ -100,7 +100,7 @@ impl ClassDescriptor {
 
             for key in &annotation.unknown_keys {
                 na_error!(
-                    "{script_path}.{} - unknown attribute '{key}'",
+                    "{script_path}.{} - {key}: unknown attribute",
                     property_info.name
                 );
             }
@@ -111,8 +111,6 @@ impl ClassDescriptor {
             }
 
             let context = ParseContext {
-                script_path: &script_path,
-                property: &property_info.name,
                 variant_type: property_info.variant_type,
                 constants: &constants,
             };
@@ -120,11 +118,17 @@ impl ClassDescriptor {
             let mut property = PropertyDescriptor::claimed(&property_info, &annotation);
             for entry in &annotation.attributes {
                 match NaughtyAttribute::parse(&entry.key, &entry.raw_args, &context) {
-                    Some(NaughtyAttribute::Meta(meta)) => property.metas.push(meta),
-                    Some(NaughtyAttribute::Validator(validator)) => {
+                    Ok(NaughtyAttribute::Meta(meta)) => property.metas.push(meta),
+                    Ok(NaughtyAttribute::Validator(validator)) => {
                         property.validators.push(validator)
                     }
-                    None => {}
+                    Err(error) => {
+                        na_error!(
+                            "{script_path}.{} - {}: {error}",
+                            property_info.name,
+                            entry.key
+                        );
+                    }
                 }
             }
 

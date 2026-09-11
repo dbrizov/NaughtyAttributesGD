@@ -144,6 +144,7 @@ impl NaughtyEditorInspectorPlugin {
 }
 
 impl NaughtyEditorInspectorPlugin {
+    /// Returns `None` if the object's script is not naughty.
     fn create_class(&self, object: &Gd<Object>) -> Option<Rc<ClassDescriptor>> {
         let class = Rc::new(ClassDescriptor::from_object(object));
         class.is_naughty().then_some(class)

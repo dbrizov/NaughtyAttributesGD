@@ -8,10 +8,10 @@ pub enum MetaAttribute {
 }
 
 impl MetaAttribute {
-    pub fn parse(key: &str, raw_args: &str, context: &ParseContext) -> Option<Self> {
+    pub fn parse(key: &str, raw_args: &str, context: &ParseContext) -> Result<Self, String> {
         match key {
             show_if::KEY => ShowIf::parse(raw_args, context).map(Self::ShowIf),
-            _ => None,
+            _ => Err("unknown attribute".to_string()),
         }
     }
 
