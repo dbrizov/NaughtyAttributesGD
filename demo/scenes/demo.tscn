@@ -13,13 +13,13 @@
 
 [node name="show_if" type="Node3D" parent="meta_attributes" unique_id=227631067]
 script = ExtResource("1_tqfh0")
+health = 100
 
 [node name="validator_attributes" type="Node3D" parent="." unique_id=1633452842]
 
 [node name="min_value" type="Node3D" parent="validator_attributes" unique_id=1917403352]
 script = ExtResource("3_mnval")
-floor_hp = 5
-int_min_1 = 50
+hp_from_field = 30
 
 [node name="builtin" type="Node3D" parent="." unique_id=1383863991]
 script = ExtResource("2_ba4lm")

@@ -1,4 +1,5 @@
 use godot::classes::EditorInterface;
+use godot::classes::undo_redo::MergeMode;
 use godot::prelude::*;
 
 struct PropertyEdit {
@@ -54,7 +55,12 @@ impl EditAction {
             return;
         };
 
-        undo_redo.create_action(action_name);
+        undo_redo
+            .create_action_ex(action_name)
+            .merge_mode(MergeMode::ALL)
+            .backward_undo_ops(true)
+            .done();
+
         for edit in &edits {
             undo_redo.add_do_property(&self.object, &edit.name, &edit.new_value);
             undo_redo.add_undo_property(&self.object, &edit.name, &edit.old_value);
