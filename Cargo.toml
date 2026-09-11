@@ -1,5 +1,5 @@
 [workspace]
-members = ["na", "na_core", "na_editor"]
+members = ["na", "na_core", "na_editor", "na_logging"]
 resolver = "3"
 
 [workspace.package]
@@ -12,3 +12,4 @@ repository = "https://github.com/dbrizov/NaughtyAttributesGD"
 godot = "0.5.5"
 na_core = { path = "na_core" }
 na_editor = { path = "na_editor" }
+na_logging = { path = "na_logging" }

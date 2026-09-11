@@ -3,6 +3,8 @@ use godot::classes::{EditorInspectorPlugin, EditorInterface, EditorPlugin, IEdit
 use godot::prelude::*;
 use godot::signal::ConnectHandle;
 
+use na_logging::na_print;
+
 use crate::editor_inspector_plugin::NaughtyEditorInspectorPlugin;
 
 #[derive(GodotClass)]
@@ -19,7 +21,7 @@ pub struct NaughtyEditorPlugin {
 #[godot_api]
 impl IEditorPlugin for NaughtyEditorPlugin {
     fn enter_tree(&mut self) {
-        godot_print!("{} Editor plugin ready", na_core::LOG_PREFIX);
+        na_print!("Editor plugin ready");
 
         let plugin = NaughtyEditorInspectorPlugin::new_gd();
         self.base_mut()

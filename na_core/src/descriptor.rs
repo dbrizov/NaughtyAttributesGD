@@ -2,7 +2,8 @@ use godot::classes::{Object, Script};
 use godot::prelude::*;
 use godot::register::info::{PropertyHint, PropertyUsageFlags};
 
-use crate::LOG_PREFIX;
+use na_logging::na_error;
+
 use crate::annotation::PropertyAnnotation;
 use crate::attributes::meta::MetaAttribute;
 use crate::attributes::validator::ValidatorAttribute;
@@ -98,8 +99,8 @@ impl ClassDescriptor {
                 PropertyAnnotation::parse(&property_info.hint_string, attributes::is_known_key);
 
             for key in &annotation.unknown_keys {
-                godot_warn!(
-                    "{LOG_PREFIX} {script_path}.{} - unknown attribute '{key}'",
+                na_error!(
+                    "{script_path}.{} - unknown attribute '{key}'",
                     property_info.name
                 );
             }

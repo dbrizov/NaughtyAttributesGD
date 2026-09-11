@@ -114,6 +114,7 @@ name = "na_core"
 version = "0.1.0"
 dependencies = [
  "godot",
+ "na_logging",
 ]
 
 [[package]]
@@ -122,6 +123,14 @@ version = "0.1.0"
 dependencies = [
  "godot",
  "na_core",
+ "na_logging",
+]
+
+[[package]]
+name = "na_logging"
+version = "0.1.0"
+dependencies = [
+ "godot",
 ]
 
 [[package]]

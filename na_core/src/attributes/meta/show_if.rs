@@ -1,6 +1,8 @@
 use godot::classes::Object;
 use godot::prelude::*;
 
+use na_logging::na_error;
+
 use crate::attributes::ParseContext;
 use crate::expression::Expression;
 
@@ -14,13 +16,22 @@ impl ShowIf {
     pub fn parse(raw_args: &str, context: &ParseContext) -> Option<Self> {
         let source = raw_args.trim();
         if source.is_empty() {
-            context.warn(KEY, "expected a boolean expression");
+            na_error!(
+                "{}.{} - {KEY}: expected a boolean expression",
+                context.script_path,
+                context.property
+            );
             return None;
         }
 
         let condition = Expression::compile(source, context.constants);
         if !condition.is_valid() {
-            context.warn(KEY, condition.error());
+            na_error!(
+                "{}.{} - {KEY}: {}",
+                context.script_path,
+                context.property,
+                condition.error()
+            );
         }
 
         Some(Self { condition })
@@ -30,13 +41,7 @@ impl ShowIf {
         match self.condition.evaluate_bool(object) {
             Ok(visible) => visible,
             Err(error) => {
-                godot_warn!(
-                    "{} {} '{}' - {}",
-                    crate::LOG_PREFIX,
-                    KEY,
-                    self.condition.expression_text(),
-                    error
-                );
+                na_error!("{KEY} '{}' - {error}", self.condition.expression_text());
                 true
             }
         }

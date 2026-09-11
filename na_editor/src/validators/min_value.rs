@@ -1,8 +1,8 @@
 use godot::prelude::*;
 
-use na_core::attributes;
 use na_core::attributes::validator::min_value::{KEY, MinValue};
-use na_core::descriptor::PropertyDescriptor;
+use na_core::descriptor::{self, PropertyDescriptor};
+use na_logging::na_error;
 
 use crate::validators::IValidator;
 use crate::variant_utils;
@@ -12,7 +12,11 @@ impl IValidator for MinValue {
         let min = match self.min_value.evaluate_number(object) {
             Ok(min) => min,
             Err(error) => {
-                attributes::warn(object, &property.name, KEY, &error);
+                na_error!(
+                    "{}.{} - {KEY}: {error}",
+                    descriptor::script_path(object),
+                    property.name
+                );
                 return None;
             }
         };

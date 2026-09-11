@@ -7,3 +7,4 @@ publish = false
 
 [dependencies]
 godot.workspace = true
+na_logging.workspace = true

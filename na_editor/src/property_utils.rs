@@ -1,9 +1,9 @@
 use godot::classes::{Control, EditorInspector, EditorProperty};
 use godot::prelude::*;
 
-use na_core::LOG_PREFIX;
 use na_core::attributes::meta::MetaAttribute;
 use na_core::descriptor::PropertyDescriptor;
+use na_logging::na_error;
 
 use crate::attribute_registry;
 use crate::edit_action::EditAction;
@@ -30,7 +30,7 @@ pub fn draw(
     );
 
     let Some(mut editor) = editor else {
-        godot_warn!("{LOG_PREFIX} no property editor for '{}'", property.name);
+        na_error!("no property editor for '{}'", property.name);
         return None;
     };
 

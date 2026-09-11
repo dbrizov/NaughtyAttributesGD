@@ -1,11 +1,8 @@
 pub mod meta;
 pub mod validator;
 
-use godot::classes::Object;
 use godot::prelude::*;
 
-use crate::LOG_PREFIX;
-use crate::descriptor;
 use meta::MetaAttribute;
 use validator::ValidatorAttribute;
 
@@ -35,28 +32,4 @@ pub struct ParseContext<'a> {
     pub property: &'a str,
     pub variant_type: VariantType,
     pub constants: &'a VarDictionary,
-}
-
-impl ParseContext<'_> {
-    pub fn warn(&self, key: &str, message: &str) {
-        godot_warn!(
-            "{} {}.{} - {}: {}",
-            LOG_PREFIX,
-            self.script_path,
-            self.property,
-            key,
-            message
-        );
-    }
-}
-
-pub fn warn(object: &Gd<Object>, property: &StringName, key: &str, message: &str) {
-    godot_warn!(
-        "{} {}.{} - {}: {}",
-        LOG_PREFIX,
-        descriptor::script_path(object),
-        property,
-        key,
-        message
-    );
 }
