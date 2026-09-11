@@ -64,19 +64,35 @@ pub struct PropertyDescriptor {
     pub validators: Vec<ValidatorAttribute>,
 }
 
+#[derive(PartialEq)]
+struct ScriptSnapshot {
+    property_list: Vec<VarDictionary>,
+    constants: VarDictionary,
+}
+
+impl ScriptSnapshot {
+    fn from_object(object: &Gd<Object>) -> Self {
+        Self {
+            property_list: script_property_list(object),
+            constants: merged_constants(object),
+        }
+    }
+}
+
 pub struct ClassDescriptor {
     pub script_path: String,
     pub category: String,
     pub properties: Vec<PropertyDescriptor>,
+    script_snapshot: ScriptSnapshot,
 }
 
 impl ClassDescriptor {
     pub fn from_object(object: &Gd<Object>) -> ClassDescriptor {
+        let script_snapshot = ScriptSnapshot::from_object(object);
         let script_path = script_path(object);
-        let constants = merged_constants(object);
         let mut properties = Vec::new();
 
-        for info in script_property_list(object) {
+        for info in &script_snapshot.property_list {
             let usage: PropertyUsageFlags = info.at("usage").to();
             if !is_editor_property(usage) {
                 continue;
@@ -112,7 +128,7 @@ impl ClassDescriptor {
 
             let context = ParseContext {
                 variant_type: property_info.variant_type,
-                constants: &constants,
+                constants: &script_snapshot.constants,
             };
 
             let mut property = PropertyDescriptor::claimed(&property_info, &annotation);
@@ -145,11 +161,16 @@ impl ClassDescriptor {
             script_path,
             category,
             properties,
+            script_snapshot,
         }
     }
 
     pub fn is_naughty(&self) -> bool {
         self.properties.iter().any(PropertyDescriptor::is_naughty)
+    }
+
+    pub fn is_stale(&self, object: &Gd<Object>) -> bool {
+        ScriptSnapshot::from_object(object) != self.script_snapshot
     }
 
     pub fn find(&self, name: &StringName) -> Option<&PropertyDescriptor> {
@@ -164,6 +185,14 @@ fn is_editor_property(usage: PropertyUsageFlags) -> bool {
         PropertyUsageFlags::GROUP | PropertyUsageFlags::SUBGROUP | PropertyUsageFlags::CATEGORY;
 
     usage.is_set(PropertyUsageFlags::EDITOR) && (usage.ord() & excluded.ord()) == 0
+}
+
+pub fn script_path(object: &Gd<Object>) -> String {
+    object
+        .get("script")
+        .try_to::<Gd<Script>>()
+        .map(|script| script.get_path().to_string())
+        .unwrap_or_default()
 }
 
 fn script_property_list(object: &Gd<Object>) -> Vec<VarDictionary> {
@@ -205,12 +234,4 @@ fn merged_constants(object: &Gd<Object>) -> VarDictionary {
     }
 
     merged
-}
-
-pub fn script_path(object: &Gd<Object>) -> String {
-    object
-        .get("script")
-        .try_to::<Gd<Script>>()
-        .map(|script| script.get_path().to_string())
-        .unwrap_or_default()
 }

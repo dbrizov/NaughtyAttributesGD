@@ -8,18 +8,17 @@ use na_logging::na_error;
 use crate::attribute_registry;
 use crate::edit_action::EditAction;
 
-/// Returns `None` if the property is hidden or Godot has no editor for it.
+/// Returns `None` if Godot has no editor for the property.
 pub fn draw(
     container: &mut Gd<Control>,
     edit_action: &mut EditAction,
     object: &Gd<Object>,
     property: &PropertyDescriptor,
 ) -> Option<Gd<EditorProperty>> {
-    if !is_visible(object, property) {
-        return None;
+    let visible = is_visible(object, property);
+    if visible {
+        validate_property(edit_action, object, property);
     }
-
-    validate_property(edit_action, object, property);
 
     let editor = EditorInspector::instantiate_property_editor(
         object,
@@ -36,6 +35,7 @@ pub fn draw(
     };
 
     editor.set_label(&capitalize_name(&property.name));
+    editor.set_visible(visible);
     container.add_child(&editor);
     editor.set_object_and_property(object, &property.name);
     editor.update_property();

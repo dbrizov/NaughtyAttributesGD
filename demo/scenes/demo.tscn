@@ -13,7 +13,6 @@
 
 [node name="show_if" type="Node3D" parent="meta_attributes" unique_id=227631067]
 script = ExtResource("1_tqfh0")
-health = 100
 
 [node name="validator_attributes" type="Node3D" parent="." unique_id=1633452842]
 

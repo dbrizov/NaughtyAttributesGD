@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use godot::classes::{
-    Control, EditorInspectorPlugin, EditorProperty, IEditorInspectorPlugin, VBoxContainer,
+    Control, EditorInspectorPlugin, EditorInterface, EditorProperty, IEditorInspectorPlugin,
+    Script, VBoxContainer,
 };
 use godot::prelude::*;
 use godot::register::info::{PropertyHint, PropertyUsageFlags};
@@ -58,7 +59,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
         let plugin_id = self.base().instance_id();
         let mut container = container;
 
-        Callable::from_fn("naughty_populate_containter", move |_args| {
+        Callable::from_fn("build_property_editors", move |_args| {
             property_editors::build_property_editors(
                 &mut container,
                 &object,
@@ -139,6 +140,37 @@ impl NaughtyEditorInspectorPlugin {
             if editor.is_visible() != visible {
                 editor.clone().set_visible(visible);
             }
+        }
+    }
+
+    #[func]
+    fn rebuild_if_stale(&self) {
+        let Some(mut object) = EditorInterface::singleton()
+            .get_inspector()
+            .and_then(|inspector| inspector.get_edited_object())
+        else {
+            return;
+        };
+
+        let is_tool_script = object
+            .get("script")
+            .try_to::<Gd<Script>>()
+            .is_ok_and(|script| script.is_tool());
+
+        if !is_tool_script {
+            return;
+        }
+
+        let stale = {
+            let state = self.state.borrow();
+            match (&state.object, &state.class) {
+                (Some(inspected), Some(class)) if *inspected == object => class.is_stale(&object),
+                _ => ClassDescriptor::from_object(&object).is_naughty(),
+            }
+        };
+
+        if stale {
+            object.notify_property_list_changed();
         }
     }
 }
