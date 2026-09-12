@@ -10,6 +10,7 @@ use godot::register::info::{PropertyHint, PropertyUsageFlags};
 
 use na_core::descriptor::ClassDescriptor;
 
+use crate::editor_style;
 use crate::property_changes;
 use crate::property_editors::{self, PropertyEditor};
 use crate::property_utils;
@@ -46,7 +47,8 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             return;
         };
 
-        let container: Gd<Control> = VBoxContainer::new_alloc().upcast();
+        let mut container: Gd<Control> = VBoxContainer::new_alloc().upcast();
+        container.add_theme_constant_override("separation", editor_style::VERTICAL_SEPARATION);
 
         {
             let mut state = self.state.borrow_mut();

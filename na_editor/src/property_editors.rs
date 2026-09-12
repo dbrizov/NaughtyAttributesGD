@@ -16,8 +16,6 @@ use crate::property_edit_action::PropertyEditAction;
 use crate::property_utils;
 use crate::variant_utils;
 
-const LABEL_WIDTH: f32 = 160.0;
-
 pub struct PropertyEditor {
     pub container: Gd<Control>,
     pub editor: Gd<EditorProperty>,
@@ -57,6 +55,7 @@ fn create_property_editor(
     };
 
     let mut container: Gd<Control> = VBoxContainer::new_alloc().upcast();
+    container.add_theme_constant_override("separation", editor_style::VERTICAL_SEPARATION);
     for decorator in &property.decorators {
         attribute_registry::get_decorator(decorator).decorate(&mut container, object);
     }
@@ -68,10 +67,11 @@ fn create_property_editor(
     let mut label = Label::new_alloc();
     label.set_text(&property_utils::capitalize_name(&property.name));
     label.set_vertical_alignment(VerticalAlignment::CENTER);
-    label.set_custom_minimum_size(Vector2::new(LABEL_WIDTH, 0.0));
+    label.set_custom_minimum_size(Vector2::new(editor_style::LABEL_WIDTH, 0.0));
 
     let revert_button = create_revert_button();
     let mut row = HBoxContainer::new_alloc();
+    row.add_theme_constant_override("separation", editor_style::HORIZONTAL_SEPARATION);
     row.add_child(&label);
     row.add_child(&revert_button);
     row.add_child(&editor);
