@@ -8,6 +8,7 @@ pub const KEY: &str = "min_max_slider";
 
 pub const SUPPORTED_TYPES: &[VariantType] = &[VariantType::VECTOR2, VariantType::VECTOR2I];
 
+#[derive(Clone)]
 pub struct MinMaxSlider {
     pub min_value: Expression,
     pub max_value: Expression,
@@ -28,6 +29,18 @@ impl MinMaxSlider {
             min_value: compile(min_value, context)?,
             max_value: compile(max_value, context)?,
         })
+    }
+
+    pub fn evaluate_bounds(&self, object: &Gd<Object>) -> Result<(f64, f64), String> {
+        let min = self.min_value.evaluate_number(object)?;
+        let max = self.max_value.evaluate_number(object)?;
+        if min > max {
+            return Err(format!(
+                "the minimum {min} is greater than the maximum {max}"
+            ));
+        }
+
+        Ok((min, max))
     }
 }
 

@@ -2,8 +2,9 @@ use godot::classes::control::SizeFlags;
 use godot::classes::{Control, EditorProperty, EditorSpinSlider, HBoxContainer, IEditorProperty};
 use godot::prelude::*;
 
-use na_core::attributes::drawer::min_max_slider::MinMaxSlider;
-use na_core::descriptor::PropertyDescriptor;
+use na_core::attributes::drawer::min_max_slider::{self, MinMaxSlider};
+use na_core::descriptor::{self, PropertyDescriptor};
+use na_logging::na_error;
 
 use crate::drawers::IDrawer;
 
@@ -13,17 +14,10 @@ impl IDrawer for MinMaxSlider {
         object: &Gd<Object>,
         property: &PropertyDescriptor,
     ) -> Result<Gd<EditorProperty>, String> {
-        let min = self.min_value.evaluate_number(object)?;
-        let max = self.max_value.evaluate_number(object)?;
-        if min > max {
-            return Err(format!(
-                "the minimum {min} is greater than the maximum {max}"
-            ));
-        }
-
+        let (min, max) = self.evaluate_bounds(object)?;
         let is_integer = property.variant_type == VariantType::VECTOR2I;
         let mut editor = NaughtyMinMaxSlider::new_alloc();
-        editor.bind_mut().setup(min, max, is_integer);
+        editor.bind_mut().setup(self.clone(), min, max, is_integer);
 
         Ok(editor.upcast())
     }
@@ -33,6 +27,7 @@ impl IDrawer for MinMaxSlider {
 #[derive(GodotClass)]
 #[class(tool, init, base = EditorProperty)]
 pub struct NaughtyMinMaxSlider {
+    attribute: Option<MinMaxSlider>,
     min_slider: Option<Gd<EditorSpinSlider>>,
     max_slider: Option<Gd<EditorSpinSlider>>,
     is_integer: bool,
@@ -47,6 +42,8 @@ impl IEditorProperty for NaughtyMinMaxSlider {
         };
 
         let property = self.base().get_edited_property();
+        self.refresh_bounds(&object, &property);
+
         let value = object.get(&property);
         let (min, max) = if self.is_integer {
             let value = value.try_to::<Vector2i>().unwrap_or_default();
@@ -100,7 +97,8 @@ impl NaughtyMinMaxSlider {
 }
 
 impl NaughtyMinMaxSlider {
-    fn setup(&mut self, min: f64, max: f64, is_integer: bool) {
+    fn setup(&mut self, attribute: MinMaxSlider, min: f64, max: f64, is_integer: bool) {
+        self.attribute = Some(attribute);
         let mut min_slider = create_slider(min, max, is_integer);
         let mut max_slider = create_slider(min, max, is_integer);
         min_slider.set_label("Min");
@@ -124,6 +122,34 @@ impl NaughtyMinMaxSlider {
         self.min_slider = Some(min_slider);
         self.max_slider = Some(max_slider);
         self.is_integer = is_integer;
+    }
+
+    fn refresh_bounds(&mut self, object: &Gd<Object>, property: &StringName) {
+        let Some(attribute) = &self.attribute else {
+            return;
+        };
+
+        let (min, max) = match attribute.evaluate_bounds(object) {
+            Ok(bounds) => bounds,
+            Err(error) => {
+                na_error!(
+                    "{}.{property} - {}: {error}",
+                    descriptor::get_script_path(object),
+                    min_max_slider::KEY
+                );
+                return;
+            }
+        };
+
+        for slider in [&mut self.min_slider, &mut self.max_slider]
+            .into_iter()
+            .flatten()
+        {
+            slider.set_block_signals(true);
+            slider.set_min(min);
+            slider.set_max(max);
+            slider.set_block_signals(false);
+        }
     }
 
     fn emit_value(&mut self) {

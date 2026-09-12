@@ -3,6 +3,7 @@ use godot::global::type_string;
 use godot::prelude::*;
 
 /// A compiled Godot `Expression`.
+#[derive(Clone)]
 pub struct Expression {
     expression_text: String,
     expression: Gd<GodotExpression>,
