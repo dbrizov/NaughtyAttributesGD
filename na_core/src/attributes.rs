@@ -1,19 +1,24 @@
+pub mod decorator;
 pub mod meta;
 pub mod validator;
 
 use godot::prelude::*;
 
+use decorator::DecoratorAttribute;
 use meta::MetaAttribute;
 use validator::ValidatorAttribute;
 
 pub enum NaughtyAttribute {
+    Decorator(DecoratorAttribute),
     Meta(MetaAttribute),
     Validator(ValidatorAttribute),
 }
 
 impl NaughtyAttribute {
     pub fn parse(key: &str, raw_args: &str, context: &ParseContext) -> Result<Self, String> {
-        if MetaAttribute::is_known_key(key) {
+        if DecoratorAttribute::is_known_key(key) {
+            DecoratorAttribute::parse(key, raw_args, context).map(Self::Decorator)
+        } else if MetaAttribute::is_known_key(key) {
             MetaAttribute::parse(key, raw_args, context).map(Self::Meta)
         } else if ValidatorAttribute::is_known_key(key) {
             ValidatorAttribute::parse(key, raw_args, context).map(Self::Validator)
@@ -24,7 +29,9 @@ impl NaughtyAttribute {
 }
 
 pub fn is_known_key(key: &str) -> bool {
-    MetaAttribute::is_known_key(key) || ValidatorAttribute::is_known_key(key)
+    DecoratorAttribute::is_known_key(key)
+        || MetaAttribute::is_known_key(key)
+        || ValidatorAttribute::is_known_key(key)
 }
 
 pub struct ParseContext<'a> {

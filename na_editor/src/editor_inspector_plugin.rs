@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use godot::classes::{
-    Control, EditorInspectorPlugin, EditorInterface, EditorProperty, IEditorInspectorPlugin,
-    Script, VBoxContainer,
+    Control, EditorInspectorPlugin, EditorInterface, IEditorInspectorPlugin, Script, VBoxContainer,
 };
 use godot::prelude::*;
 use godot::register::info::{PropertyHint, PropertyUsageFlags};
@@ -12,14 +11,14 @@ use godot::register::info::{PropertyHint, PropertyUsageFlags};
 use na_core::descriptor::ClassDescriptor;
 
 use crate::property_changes;
-use crate::property_editors;
+use crate::property_editors::{self, PropertyEditor};
 use crate::property_utils;
 
 #[derive(Default)]
 struct InspectorState {
     class: Option<Rc<ClassDescriptor>>,
     object: Option<Gd<Object>>,
-    property_editors: HashMap<StringName, Gd<EditorProperty>>,
+    property_editors: HashMap<StringName, PropertyEditor>,
     pending_container: Option<Gd<Control>>,
 }
 
@@ -68,8 +67,13 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
 
             let mut editors =
                 property_editors::create_property_editors(&mut container, &object, &class);
-            for editor in editors.values_mut() {
-                property_changes::connect_property_changed(editor, &object, &class, plugin_id);
+            for property_editor in editors.values_mut() {
+                property_changes::connect_property_changed(
+                    &mut property_editor.editor,
+                    &object,
+                    &class,
+                    plugin_id,
+                );
             }
 
             state.borrow_mut().property_editors = editors;
@@ -117,9 +121,9 @@ impl NaughtyEditorInspectorPlugin {
     #[func]
     fn sync_property_editors(&self) {
         let state = self.state.borrow();
-        for editor in state.property_editors.values() {
-            if editor.is_instance_valid() {
-                editor.clone().update_property();
+        for property_editor in state.property_editors.values() {
+            if property_editor.editor.is_instance_valid() {
+                property_editor.editor.clone().update_property();
             }
         }
         drop(state);
@@ -134,17 +138,17 @@ impl NaughtyEditorInspectorPlugin {
         };
 
         for property in &class.properties {
-            let Some(editor) = state.property_editors.get(&property.name) else {
+            let Some(property_editor) = state.property_editors.get(&property.name) else {
                 continue;
             };
 
-            if !editor.is_instance_valid() {
+            if !property_editor.container.is_instance_valid() {
                 continue;
             }
 
             let visible = property_utils::is_visible(object, property);
-            if editor.is_visible() != visible {
-                editor.clone().set_visible(visible);
+            if property_editor.container.is_visible() != visible {
+                property_editor.container.clone().set_visible(visible);
             }
         }
     }

@@ -1,4 +1,5 @@
 mod attribute_registry;
+mod decorators;
 mod editor_inspector_plugin;
 mod editor_plugin;
 mod property_changes;

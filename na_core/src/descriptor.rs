@@ -5,6 +5,7 @@ use godot::register::info::{PropertyHint, PropertyUsageFlags};
 use na_logging::na_error;
 
 use crate::annotation::PropertyAnnotation;
+use crate::attributes::decorator::DecoratorAttribute;
 use crate::attributes::meta::MetaAttribute;
 use crate::attributes::validator::ValidatorAttribute;
 use crate::attributes::{self, NaughtyAttribute, ParseContext};
@@ -18,6 +19,7 @@ impl PropertyDescriptor {
             hint_text: GString::from(info.hint_text.as_str()),
             usage: info.usage,
             claimed: false,
+            decorators: Vec::new(),
             metas: Vec::new(),
             validators: Vec::new(),
         }
@@ -60,6 +62,7 @@ pub struct PropertyDescriptor {
     pub hint_text: GString,
     pub usage: PropertyUsageFlags,
     pub claimed: bool,
+    pub decorators: Vec<DecoratorAttribute>,
     pub metas: Vec<MetaAttribute>,
     pub validators: Vec<ValidatorAttribute>,
 }
@@ -134,6 +137,9 @@ impl ClassDescriptor {
             let mut property = PropertyDescriptor::claimed(&property_info, &annotation);
             for entry in &annotation.attributes {
                 match NaughtyAttribute::parse(&entry.key, &entry.raw_args, &context) {
+                    Ok(NaughtyAttribute::Decorator(decorator)) => {
+                        property.decorators.push(decorator)
+                    }
                     Ok(NaughtyAttribute::Meta(meta)) => property.metas.push(meta),
                     Ok(NaughtyAttribute::Validator(validator)) => {
                         property.validators.push(validator)

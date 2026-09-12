@@ -4,8 +4,14 @@
 [ext_resource type="Script" uid="uid://hu0b451jnsv1" path="res://scripts/builtin_test.gd" id="2_ba4lm"]
 [ext_resource type="Script" uid="uid://ikljy4h7nwfa" path="res://scripts/validator_tests/min_value.gd" id="3_mnval"]
 [ext_resource type="Script" uid="uid://ctl33a8k6pvog" path="res://scripts/not_naughty_test.gd" id="4_vephn"]
+[ext_resource type="Script" uid="uid://c3j8pl8ublw6e" path="res://scripts/decorator_tests/info_box.gd" id="5_ifbox"]
 
 [node name="root" type="Node3D" unique_id=1486502538]
+
+[node name="decorator_attributes" type="Node3D" parent="." unique_id=118726862]
+
+[node name="info_box" type="Node3D" parent="decorator_attributes" unique_id=227631068]
+script = ExtResource("5_ifbox")
 
 [node name="drawer_attributes" type="Node3D" parent="." unique_id=118726861]
 
