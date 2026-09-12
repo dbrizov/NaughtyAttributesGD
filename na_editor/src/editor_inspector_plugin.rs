@@ -67,11 +67,19 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
 
             let mut editors =
                 property_editors::create_property_editors(&mut container, &object, &class);
-            for property_editor in editors.values_mut() {
+            for (name, property_editor) in editors.iter_mut() {
                 property_changes::connect_property_changed(
                     &mut property_editor.editor,
                     &object,
                     &class,
+                    plugin_id,
+                );
+
+                property_changes::connect_revert_pressed(
+                    &mut property_editor.revert_button,
+                    &object,
+                    &class,
+                    name,
                     plugin_id,
                 );
             }
@@ -127,11 +135,11 @@ impl NaughtyEditorInspectorPlugin {
             }
         }
         drop(state);
-        self.refresh_conditions();
+        self.refresh_property_editors();
     }
 
     #[func]
-    fn refresh_conditions(&self) {
+    fn refresh_property_editors(&self) {
         let state = self.state.borrow();
         let (Some(object), Some(class)) = (state.object.as_ref(), state.class.as_ref()) else {
             return;
@@ -150,6 +158,8 @@ impl NaughtyEditorInspectorPlugin {
             if property_editor.container.is_visible() != visible {
                 property_editor.container.clone().set_visible(visible);
             }
+
+            property_editor.refresh_revert_button(object, property);
         }
     }
 

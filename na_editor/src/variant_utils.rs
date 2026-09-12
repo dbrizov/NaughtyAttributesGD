@@ -2,6 +2,41 @@ use godot::builtin::real;
 use godot::global::type_string;
 use godot::prelude::*;
 
+const TOLERANCE: f64 = 1e-5;
+
+pub fn is_equal_approx(left: &Variant, right: &Variant) -> bool {
+    if left.get_type() != right.get_type() {
+        return left == right;
+    }
+
+    match left.get_type() {
+        VariantType::FLOAT => is_float_equal_approx(left.to::<f64>(), right.to::<f64>()),
+        VariantType::VECTOR2 => {
+            let (left, right) = (left.to::<Vector2>(), right.to::<Vector2>());
+            is_float_equal_approx(left.x as f64, right.x as f64)
+                && is_float_equal_approx(left.y as f64, right.y as f64)
+        }
+        VariantType::VECTOR3 => {
+            let (left, right) = (left.to::<Vector3>(), right.to::<Vector3>());
+            is_float_equal_approx(left.x as f64, right.x as f64)
+                && is_float_equal_approx(left.y as f64, right.y as f64)
+                && is_float_equal_approx(left.z as f64, right.z as f64)
+        }
+        VariantType::VECTOR4 => {
+            let (left, right) = (left.to::<Vector4>(), right.to::<Vector4>());
+            is_float_equal_approx(left.x as f64, right.x as f64)
+                && is_float_equal_approx(left.y as f64, right.y as f64)
+                && is_float_equal_approx(left.z as f64, right.z as f64)
+                && is_float_equal_approx(left.w as f64, right.w as f64)
+        }
+        _ => left == right,
+    }
+}
+
+fn is_float_equal_approx(left: f64, right: f64) -> bool {
+    (left - right).abs() <= TOLERANCE * left.abs().max(right.abs()).max(1.0)
+}
+
 pub fn clamp(value: &Variant, min: f64, max: f64) -> Result<Variant, String> {
     let real_min = min as real;
     let real_max = max as real;

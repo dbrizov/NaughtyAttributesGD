@@ -3,6 +3,7 @@ mod decorators;
 mod drawers;
 mod editor_inspector_plugin;
 mod editor_plugin;
+mod editor_style;
 mod property_changes;
 mod property_edit_action;
 mod property_editors;

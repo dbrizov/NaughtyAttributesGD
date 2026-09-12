@@ -19,6 +19,7 @@ impl PropertyDescriptor {
             hint: info.hint,
             hint_text: GString::from(info.hint_text.as_str()),
             usage: info.usage,
+            default_value: info.default_value.clone(),
             claimed: false,
             decorators: Vec::new(),
             drawer: None,
@@ -55,6 +56,7 @@ struct PropertyInfo {
     hint: PropertyHint,
     hint_text: String,
     usage: PropertyUsageFlags,
+    default_value: Variant,
 }
 
 pub struct PropertyDescriptor {
@@ -63,6 +65,7 @@ pub struct PropertyDescriptor {
     pub hint: PropertyHint,
     pub hint_text: GString,
     pub usage: PropertyUsageFlags,
+    pub default_value: Variant,
     pub claimed: bool,
     pub decorators: Vec<DecoratorAttribute>,
     pub drawer: Option<DrawerAttribute>,
@@ -74,6 +77,7 @@ pub struct PropertyDescriptor {
 struct ScriptSnapshot {
     property_list: Vec<VarDictionary>,
     constants: VarDictionary,
+    default_values: VarDictionary,
 }
 
 impl ScriptSnapshot {
@@ -81,6 +85,7 @@ impl ScriptSnapshot {
         Self {
             property_list: get_script_property_list(object),
             constants: get_constants(object),
+            default_values: get_default_values(object),
         }
     }
 }
@@ -110,6 +115,10 @@ impl ClassDescriptor {
                 hint: info.at("hint").to(),
                 hint_text: info.at("hint_string").to::<GString>().to_string(),
                 usage,
+                default_value: script_snapshot
+                    .default_values
+                    .get(&info.at("name"))
+                    .unwrap_or_default(),
             };
 
             if property_info.hint != PropertyHint::NONE || property_info.hint_text.is_empty() {
@@ -215,20 +224,24 @@ pub fn get_script_path(object: &Gd<Object>) -> String {
         .unwrap_or_default()
 }
 
-fn get_script_property_list(object: &Gd<Object>) -> Vec<VarDictionary> {
-    let Ok(script) = object.get("script").try_to::<Gd<Script>>() else {
-        return Vec::new();
-    };
-
+/// Returns the script and its bases, base-first.
+fn get_script_chain(object: &Gd<Object>) -> Vec<Gd<Script>> {
     let mut chain = Vec::new();
-    let mut current = Some(script);
+    let mut current = object.get("script").try_to::<Gd<Script>>().ok();
+
     while let Some(script) = current {
         current = script.get_base_script();
         chain.push(script);
     }
 
+    chain.reverse();
+    chain
+}
+
+fn get_script_property_list(object: &Gd<Object>) -> Vec<VarDictionary> {
     let mut properties = Vec::new();
-    for script in chain.iter().rev() {
+
+    for script in get_script_chain(object) {
         for info in script.get_script_property_list().iter_shared() {
             properties.push(info);
         }
@@ -239,19 +252,26 @@ fn get_script_property_list(object: &Gd<Object>) -> Vec<VarDictionary> {
 
 fn get_constants(object: &Gd<Object>) -> VarDictionary {
     let mut constants = VarDictionary::new();
-    let mut chain = Vec::new();
-    let mut current = object.get("script").try_to::<Gd<Script>>().ok();
 
-    while let Some(script) = current {
-        current = script.get_base_script();
-        chain.push(script);
-    }
-
-    for script in chain.iter().rev() {
+    for script in get_script_chain(object) {
         for (key, value) in script.get_script_constant_map().iter_shared() {
             constants.set(&key, &value);
         }
     }
 
     constants
+}
+
+fn get_default_values(object: &Gd<Object>) -> VarDictionary {
+    let mut default_values = VarDictionary::new();
+
+    for script in get_script_chain(object) {
+        for info in script.get_script_property_list().iter_shared() {
+            let name = info.at("name");
+            let text = name.to::<GString>().to_string();
+            default_values.set(&name, &script.get_property_default_value(text.as_str()));
+        }
+    }
+
+    default_values
 }

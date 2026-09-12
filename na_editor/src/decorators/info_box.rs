@@ -2,21 +2,19 @@ use godot::builtin::Side;
 use godot::classes::control::SizeFlags;
 use godot::classes::text_server::AutowrapMode;
 use godot::classes::texture_rect::StretchMode;
-use godot::classes::{
-    Control, EditorInterface, HBoxContainer, Label, PanelContainer, StyleBoxFlat, Texture2D,
-    TextureRect,
-};
+use godot::classes::{Control, HBoxContainer, Label, PanelContainer, StyleBoxFlat, TextureRect};
 use godot::global::VerticalAlignment;
 use godot::prelude::*;
 
 use na_core::attributes::decorator::info_box::{InfoBox, Severity};
 
 use crate::decorators::IDecorator;
+use crate::editor_style;
 
 impl IDecorator for InfoBox {
     fn decorate(&self, container: &mut Gd<Control>, _object: &Gd<Object>) {
         let mut icon = TextureRect::new_alloc();
-        if let Some(texture) = get_icon(self.severity) {
+        if let Some(texture) = editor_style::get_icon(get_icon_name(self.severity)) {
             icon.set_texture(&texture);
         }
         icon.set_stretch_mode(StretchMode::KEEP_CENTERED);
@@ -41,7 +39,8 @@ impl IDecorator for InfoBox {
 }
 
 fn create_bubble_style(severity: Severity) -> Gd<StyleBoxFlat> {
-    let color = get_color(severity);
+    let color = editor_style::get_color(get_color_name(severity))
+        .unwrap_or_else(|| Color::from_rgb(0.6, 0.6, 0.6));
 
     let mut style = StyleBoxFlat::new_gd();
     style.set_bg_color(Color { a: 0.12, ..color });
@@ -55,31 +54,18 @@ fn create_bubble_style(severity: Severity) -> Gd<StyleBoxFlat> {
     style
 }
 
-fn get_icon(severity: Severity) -> Option<Gd<Texture2D>> {
-    let name = match severity {
+fn get_icon_name(severity: Severity) -> &'static str {
+    match severity {
         Severity::Info => "NodeInfo",
         Severity::Warning => "StatusWarning",
         Severity::Error => "StatusError",
-    };
-
-    let theme = EditorInterface::singleton().get_editor_theme()?;
-    if !theme.has_icon(name, "EditorIcons") {
-        return None;
     }
-
-    theme.get_icon(name, "EditorIcons")
 }
 
-fn get_color(severity: Severity) -> Color {
-    let name = match severity {
+fn get_color_name(severity: Severity) -> &'static str {
+    match severity {
         Severity::Info => "accent_color",
         Severity::Warning => "warning_color",
         Severity::Error => "error_color",
-    };
-
-    EditorInterface::singleton()
-        .get_editor_theme()
-        .filter(|theme| theme.has_color(name, "Editor"))
-        .map(|theme| theme.get_color(name, "Editor"))
-        .unwrap_or_else(|| Color::from_rgb(0.6, 0.6, 0.6))
+    }
 }

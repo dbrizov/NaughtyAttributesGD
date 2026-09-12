@@ -101,7 +101,7 @@ impl NaughtyEditorPlugin {
         };
 
         self.is_refreshing = true;
-        plugin.call_deferred("refresh_conditions", &[]);
+        plugin.call_deferred("refresh_property_editors", &[]);
         self.is_refreshing = false;
     }
 
