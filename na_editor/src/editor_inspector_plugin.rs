@@ -205,6 +205,11 @@ impl NaughtyEditorInspectorPlugin {
         name: GString,
         value: Variant,
     ) {
+        let name = StringName::from(&name);
+        if name == "script" {
+            return;
+        }
+
         let class = self
             .state
             .borrow()
@@ -217,7 +222,6 @@ impl NaughtyEditorInspectorPlugin {
             return;
         };
 
-        let name = StringName::from(&name);
         let mut undo_redo = undo_redo;
         let mut edit_session = self.state.borrow_mut().edit_session.take();
 
