@@ -62,7 +62,7 @@ impl Expression {
             return Err(self.error.clone());
         }
 
-        let mut expression = self.expression.clone();
+        let mut expression = Gd::clone(&self.expression);
         let result = expression
             .execute_ex()
             .inputs(&self.inputs)

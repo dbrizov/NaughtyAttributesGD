@@ -24,7 +24,7 @@ pub struct PropertyEditAction {
 impl PropertyEditAction {
     pub fn new(object: &Gd<Object>) -> Self {
         Self {
-            object: object.clone(),
+            object: Gd::clone(object),
             edits: Vec::new(),
         }
     }
@@ -50,7 +50,7 @@ impl PropertyEditAction {
 
     /// Returns the names of the changed properties, or `None` if nothing changed.
     pub fn commit(self, action_name: &str) -> Option<Vec<StringName>> {
-        let object = self.object.clone();
+        let object = Gd::clone(&self.object);
         let edits = self.get_changes();
         if edits.is_empty() {
             return None;
@@ -83,8 +83,8 @@ impl PropertyEditAction {
         session: &EditSession,
         requested_value: &Variant,
     ) {
-        let object = self.object.clone();
-        let history = get_history(undo_redo, &object);
+        let object = Gd::clone(&self.object);
+        let mut history = get_history(undo_redo, &object);
         let edits = self.revert();
 
         for edit in &edits {
@@ -104,19 +104,19 @@ impl PropertyEditAction {
             undo_redo.add_do_property(&object, &edit.name, &edit.new_value);
 
             let origin = session.origins.get(&edit.name).unwrap_or(&edit.old_value);
-            if let Some(mut history) = history.clone() {
+            if let Some(history) = history.as_mut() {
                 history.start_force_keep_in_merge_ends();
             }
 
             undo_redo.add_undo_property(&object, &edit.name, origin);
-            if let Some(mut history) = history.clone() {
+            if let Some(history) = history.as_mut() {
                 history.end_force_keep_in_merge_ends();
             }
         }
     }
 
     fn revert(self) -> Vec<PropertyEdit> {
-        let mut object = self.object.clone();
+        let mut object = Gd::clone(&self.object);
         for edit in self.edits.iter().rev() {
             object.set(&edit.name, &edit.old_value);
         }

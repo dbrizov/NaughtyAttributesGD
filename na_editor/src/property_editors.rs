@@ -16,7 +16,7 @@ pub struct PropertyEditor {
 
 impl PropertyEditor {
     pub fn set_visible(&self, visible: bool) {
-        let editor: Gd<Control> = self.editor.clone().upcast();
+        let editor: Gd<Control> = Gd::clone(&self.editor).upcast();
         set_control_visible(&editor, visible);
         if let Some(decorations) = &self.decorations {
             set_control_visible(decorations, visible);
@@ -26,7 +26,7 @@ impl PropertyEditor {
 
 fn set_control_visible(control: &Gd<Control>, visible: bool) {
     if control.is_instance_valid() && control.is_visible() != visible {
-        control.clone().set_visible(visible);
+        Gd::clone(control).set_visible(visible);
     }
 }
 

@@ -22,7 +22,7 @@ struct InstantiationScope(Rc<Cell<bool>>);
 impl InstantiationScope {
     fn enter(flag: &Rc<Cell<bool>>) -> Self {
         flag.set(true);
-        Self(flag.clone())
+        Self(Rc::clone(flag))
     }
 }
 
@@ -94,7 +94,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             object.instance_id(),
             ObjectState {
                 class,
-                object: object.clone(),
+                object: Gd::clone(&object),
                 property_editors: HashMap::new(),
                 edit_action: Some(PropertyEditAction::new(&object)),
             },
@@ -157,7 +157,10 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
                 return false;
             };
 
-            (object_state.class.clone(), object_state.edit_action.take())
+            (
+                Rc::clone(&object_state.class),
+                object_state.edit_action.take(),
+            )
         };
 
         let Some(mut edit_action) = edit_action else {
@@ -183,7 +186,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             self.base_mut().add_custom_control(decorations);
         }
 
-        let editor: Gd<Control> = property_editor.editor.clone().upcast();
+        let editor: Gd<Control> = Gd::clone(&property_editor.editor).upcast();
         self.base_mut()
             .add_property_editor(&GString::from(&name), &editor);
 
@@ -215,7 +218,7 @@ impl NaughtyEditorInspectorPlugin {
             .borrow()
             .objects
             .get(&object.instance_id())
-            .map(|object_state| object_state.class.clone())
+            .map(|object_state| Rc::clone(&object_state.class))
             .or_else(|| self.create_naughty_class(&object));
 
         let Some(class) = class else {
@@ -247,7 +250,7 @@ impl NaughtyEditorInspectorPlugin {
             .objects
             .values()
             .flat_map(|object_state| object_state.property_editors.values())
-            .map(|property_editor| property_editor.editor.clone())
+            .map(|property_editor| Gd::clone(&property_editor.editor))
             .collect();
 
         {
@@ -272,8 +275,8 @@ impl NaughtyEditorInspectorPlugin {
             .map(|(instance_id, object_state)| {
                 (
                     *instance_id,
-                    object_state.object.clone(),
-                    object_state.class.clone(),
+                    Gd::clone(&object_state.object),
+                    Rc::clone(&object_state.class),
                 )
             })
             .collect();
@@ -314,7 +317,7 @@ impl NaughtyEditorInspectorPlugin {
             .borrow()
             .objects
             .get(&object.instance_id())
-            .map(|object_state| object_state.class.clone());
+            .map(|object_state| Rc::clone(&object_state.class));
 
         let stale = match class {
             Some(class) => class.is_stale(&object),

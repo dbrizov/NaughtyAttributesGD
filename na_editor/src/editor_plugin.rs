@@ -24,7 +24,7 @@ impl IEditorPlugin for NaughtyEditorPlugin {
         na_print!("Editor plugin ready");
 
         let plugin = NaughtyEditorInspectorPlugin::new_gd();
-        let inspector_plugin: Gd<EditorInspectorPlugin> = plugin.clone().upcast();
+        let inspector_plugin: Gd<EditorInspectorPlugin> = Gd::clone(&plugin).upcast();
         self.base_mut().add_inspector_plugin(&inspector_plugin);
         self.inspector_plugin = Some(plugin);
 
@@ -105,8 +105,7 @@ impl NaughtyEditorPlugin {
             return;
         };
 
-        let handle = undo_redo
-            .clone()
+        let handle = Gd::clone(&undo_redo)
             .signals()
             .version_changed()
             .connect_other(&*self, Self::on_version_changed);
@@ -115,7 +114,7 @@ impl NaughtyEditorPlugin {
     }
 
     fn on_version_changed(&mut self) {
-        let Some(mut plugin) = self.inspector_plugin.clone() else {
+        let Some(plugin) = self.inspector_plugin.as_mut() else {
             return;
         };
 
@@ -163,8 +162,8 @@ impl NaughtyEditorPlugin {
         self.request_rebuild_if_stale();
     }
 
-    fn request_rebuild_if_stale(&self) {
-        let Some(mut plugin) = self.inspector_plugin.clone() else {
+    fn request_rebuild_if_stale(&mut self) {
+        let Some(plugin) = self.inspector_plugin.as_mut() else {
             return;
         };
 

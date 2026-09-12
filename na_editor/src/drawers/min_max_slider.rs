@@ -115,8 +115,8 @@ impl NaughtyMinMaxSlider {
 
         let mut base = self.base_mut();
         base.add_child(&row);
-        base.add_focusable(&min_slider.clone().upcast::<Control>());
-        base.add_focusable(&max_slider.clone().upcast::<Control>());
+        base.add_focusable(&Gd::clone(&min_slider).upcast::<Control>());
+        base.add_focusable(&Gd::clone(&max_slider).upcast::<Control>());
         drop(base);
 
         self.min_slider = Some(min_slider);
