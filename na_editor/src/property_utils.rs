@@ -1,3 +1,4 @@
+use godot::classes::EditorProperty;
 use godot::prelude::*;
 
 use na_core::attributes::meta::{MetaAttribute, show_if};
@@ -6,6 +7,26 @@ use na_logging::na_error;
 
 use crate::attribute_registry;
 use crate::property_edit_action::PropertyEditAction;
+
+/// Returns `None` when the property has no drawer, or when its drawer failed.
+pub fn create_drawer_editor(
+    object: &Gd<Object>,
+    property: &PropertyDescriptor,
+) -> Option<Gd<EditorProperty>> {
+    let drawer = property.drawer.as_ref()?;
+    match attribute_registry::get_drawer(drawer).create_editor(object, property) {
+        Ok(editor) => Some(editor),
+        Err(error) => {
+            na_error!(
+                "{}.{} - {}: {error}",
+                descriptor::get_script_path(object),
+                property.name,
+                drawer.get_key()
+            );
+            None
+        }
+    }
+}
 
 /// A condition that fails to evaluate counts as visible.
 pub fn is_visible(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {

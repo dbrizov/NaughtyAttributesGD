@@ -72,7 +72,7 @@ impl Expression {
                 "'{}' - {}{}",
                 self.expression_text,
                 expression.get_error_text(),
-                get_tool_hint(object, &self.expression_text)
+                get_call_hint(object, &self.expression_text)
             ));
         }
 
@@ -98,7 +98,7 @@ impl Expression {
     }
 }
 
-fn get_tool_hint(object: &Gd<Object>, expression_text: &str) -> &'static str {
+fn get_call_hint(object: &Gd<Object>, expression_text: &str) -> &'static str {
     if !expression_text.contains('(') {
         return "";
     }
@@ -110,7 +110,7 @@ fn get_tool_hint(object: &Gd<Object>, expression_text: &str) -> &'static str {
         .unwrap_or(true);
 
     if is_tool {
-        ""
+        " (check that the method exists on the script and that its arguments match)"
     } else {
         " (calling a method needs @tool on the script)"
     }

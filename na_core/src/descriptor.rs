@@ -6,6 +6,7 @@ use na_logging::na_error;
 
 use crate::annotation::PropertyAnnotation;
 use crate::attributes::decorator::DecoratorAttribute;
+use crate::attributes::drawer::DrawerAttribute;
 use crate::attributes::meta::MetaAttribute;
 use crate::attributes::validator::ValidatorAttribute;
 use crate::attributes::{self, NaughtyAttribute, ParseContext};
@@ -20,6 +21,7 @@ impl PropertyDescriptor {
             usage: info.usage,
             claimed: false,
             decorators: Vec::new(),
+            drawer: None,
             metas: Vec::new(),
             validators: Vec::new(),
         }
@@ -63,6 +65,7 @@ pub struct PropertyDescriptor {
     pub usage: PropertyUsageFlags,
     pub claimed: bool,
     pub decorators: Vec<DecoratorAttribute>,
+    pub drawer: Option<DrawerAttribute>,
     pub metas: Vec<MetaAttribute>,
     pub validators: Vec<ValidatorAttribute>,
 }
@@ -139,6 +142,17 @@ impl ClassDescriptor {
                 match NaughtyAttribute::parse(&entry.key, &entry.raw_args, &context) {
                     Ok(NaughtyAttribute::Decorator(decorator)) => {
                         property.decorators.push(decorator)
+                    }
+                    Ok(NaughtyAttribute::Drawer(drawer)) => {
+                        if property.drawer.is_some() {
+                            na_error!(
+                                "{script_path}.{} - {}: a property can have only one drawer, keeping the last one",
+                                property_info.name,
+                                entry.key
+                            );
+                        }
+
+                        property.drawer = Some(drawer);
                     }
                     Ok(NaughtyAttribute::Meta(meta)) => property.metas.push(meta),
                     Ok(NaughtyAttribute::Validator(validator)) => {

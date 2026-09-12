@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://ikljy4h7nwfa" path="res://scripts/validator_tests/min_value.gd" id="3_mnval"]
 [ext_resource type="Script" uid="uid://ctl33a8k6pvog" path="res://scripts/not_naughty_test.gd" id="4_vephn"]
 [ext_resource type="Script" uid="uid://c3j8pl8ublw6e" path="res://scripts/decorator_tests/info_box.gd" id="5_ifbox"]
+[ext_resource type="Script" uid="uid://fanxmy68t1mb" path="res://scripts/drawer_tests/min_max_slider.gd" id="6_mnmax"]
 
 [node name="root" type="Node3D" unique_id=1486502538]
 
@@ -14,6 +15,9 @@
 script = ExtResource("5_ifbox")
 
 [node name="drawer_attributes" type="Node3D" parent="." unique_id=118726861]
+
+[node name="min_max_slider" type="Node3D" parent="drawer_attributes" unique_id=227631069]
+script = ExtResource("6_mnmax")
 
 [node name="meta_attributes" type="Node3D" parent="." unique_id=1126352231]
 

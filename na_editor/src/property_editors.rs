@@ -28,14 +28,8 @@ fn create_property_editor(
         property_utils::validate_property(edit_action, object, property);
     }
 
-    let editor = EditorInspector::instantiate_property_editor(
-        object,
-        property.variant_type,
-        &GString::from(&property.name),
-        property.hint,
-        &property.hint_text,
-        property.usage.ord() as u32,
-    );
+    let editor = property_utils::create_drawer_editor(object, property)
+        .or_else(|| create_default_editor(object, property));
 
     let Some(mut editor) = editor else {
         na_error!("No property editor for '{}'", property.name);
@@ -55,6 +49,20 @@ fn create_property_editor(
     editor.update_property();
 
     Some(PropertyEditor { container, editor })
+}
+
+fn create_default_editor(
+    object: &Gd<Object>,
+    property: &PropertyDescriptor,
+) -> Option<Gd<EditorProperty>> {
+    EditorInspector::instantiate_property_editor(
+        object,
+        property.variant_type,
+        &GString::from(&property.name),
+        property.hint,
+        &property.hint_text,
+        property.usage.ord() as u32,
+    )
 }
 
 /// Returns the created editors keyed by property name. Properties Godot has no editor for are left out.
