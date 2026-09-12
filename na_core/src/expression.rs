@@ -2,6 +2,7 @@ use godot::classes::{Expression as GodotExpression, Object, Script};
 use godot::global::type_string;
 use godot::prelude::*;
 
+/// A compiled Godot `Expression`.
 pub struct Expression {
     expression_text: String,
     expression: Gd<GodotExpression>,
@@ -20,9 +21,10 @@ impl Expression {
             inputs.push(&value);
         }
 
+        let normalized_text = normalize_operators(expression_text);
         let mut expression = GodotExpression::new_gd();
         let error = expression
-            .parse_ex(&GString::from(&normalize_operators(expression_text)))
+            .parse_ex(&GString::from(&normalized_text))
             .input_names(&input_names)
             .done();
 

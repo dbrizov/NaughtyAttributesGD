@@ -21,15 +21,15 @@ impl IDrawer for MinMaxSlider {
             ));
         }
 
+        let is_integer = property.variant_type == VariantType::VECTOR2I;
         let mut editor = NaughtyMinMaxSlider::new_alloc();
-        editor
-            .bind_mut()
-            .setup(min, max, property.variant_type == VariantType::VECTOR2I);
+        editor.bind_mut().setup(min, max, is_integer);
 
         Ok(editor.upcast())
     }
 }
 
+/// The `min_max_slider` widget (not the attribute).
 #[derive(GodotClass)]
 #[class(tool, init, base = EditorProperty)]
 pub struct NaughtyMinMaxSlider {
@@ -46,7 +46,8 @@ impl IEditorProperty for NaughtyMinMaxSlider {
             return;
         };
 
-        let value = object.get(&self.base().get_edited_property());
+        let property = self.base().get_edited_property();
+        let value = object.get(&property);
         let (min, max) = if self.is_integer {
             let value = value.try_to::<Vector2i>().unwrap_or_default();
             (value.x as f64, value.y as f64)

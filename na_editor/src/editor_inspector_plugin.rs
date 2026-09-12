@@ -16,6 +16,7 @@ use crate::property_editors::{self, PropertyEditor};
 use crate::property_undo_redo::{EditSession, PropertyEditAction};
 use crate::property_utils;
 
+/// Set while a default editor is instantiated to prevent internal mutability raise conditions.
 struct InstantiationScope(Rc<Cell<bool>>);
 
 impl InstantiationScope {
@@ -117,10 +118,11 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             )
         };
 
+        let action_name = format!("Validate {script_name}");
         let mut edit_action = edit_action;
         Callable::from_fn("commit_validation", move |_args| {
             if let Some(edit_action) = edit_action.take() {
-                edit_action.commit(&format!("Validate {script_name}"));
+                edit_action.commit(&action_name);
             }
 
             Variant::nil()
@@ -134,7 +136,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
         _variant_type: VariantType,
         name: GString,
         _hint: PropertyHint,
-        _hint_string: GString,
+        _hint_text: GString,
         _usage: PropertyUsageFlags,
         wide: bool,
     ) -> bool {
@@ -279,7 +281,8 @@ impl NaughtyEditorInspectorPlugin {
                     continue;
                 };
 
-                property_editor.set_visible(property_utils::is_visible(object, property));
+                let visible = property_utils::is_visible(object, property);
+                property_editor.set_visible(visible);
             }
         }
     }

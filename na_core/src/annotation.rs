@@ -42,12 +42,14 @@ pub fn builtin_hint_from_key(key: &str) -> Option<PropertyHint> {
         .map(|(_, hint)| *hint)
 }
 
+/// One `key:raw_args` entry of a hint text, before the attribute splits its arguments.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AttributeEntry {
     pub key: String,
     pub raw_args: String,
 }
 
+/// A parsed hint text.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct PropertyAnnotation {
     pub builtin: Option<(String, String)>,
@@ -56,10 +58,10 @@ pub struct PropertyAnnotation {
 }
 
 impl PropertyAnnotation {
-    pub fn parse(hint_string: &str, is_known_key: impl Fn(&str) -> bool) -> Self {
+    pub fn parse(hint_text: &str, is_known_key: impl Fn(&str) -> bool) -> Self {
         let mut annotation = PropertyAnnotation::default();
 
-        for entry in split_unescaped(hint_string, ';') {
+        for entry in split_unescaped(hint_text, ';') {
             let entry = entry.trim();
             if entry.is_empty() {
                 continue;
@@ -236,7 +238,7 @@ mod tests {
     }
 
     #[test]
-    fn plain_hint_strings_are_not_claimed() {
+    fn plain_hint_texts_are_not_claimed() {
         assert!(!PropertyAnnotation::parse("", known).is_claimed());
         assert!(!PropertyAnnotation::parse("2:", known).is_claimed());
     }

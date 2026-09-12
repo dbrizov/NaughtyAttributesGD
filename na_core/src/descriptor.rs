@@ -70,6 +70,7 @@ pub struct PropertyDescriptor {
     pub validators: Vec<ValidatorAttribute>,
 }
 
+/// Everything a class descriptor was built from, compared to detect a changed script.
 #[derive(PartialEq)]
 struct ScriptSnapshot {
     property_list: Vec<VarDictionary>,
@@ -260,7 +261,8 @@ fn get_default_values(object: &Gd<Object>) -> VarDictionary {
     for info in script.get_script_property_list().iter_shared() {
         let name = info.at("name");
         let text = name.to::<GString>().to_string();
-        default_values.set(&name, &script.get_property_default_value(text.as_str()));
+        let default_value = script.get_property_default_value(text.as_str());
+        default_values.set(&name, &default_value);
     }
 
     default_values

@@ -13,22 +13,22 @@ pub fn create_drawer_editor(
     object: &Gd<Object>,
     property: &PropertyDescriptor,
 ) -> Option<Gd<EditorProperty>> {
-    let drawer = property.drawer.as_ref()?;
-    match attribute_registry::get_drawer(drawer).create_editor(object, property) {
+    let attribute = property.drawer.as_ref()?;
+    let drawer = attribute_registry::get_drawer(attribute);
+    match drawer.create_editor(object, property) {
         Ok(editor) => Some(editor),
         Err(error) => {
             na_error!(
                 "{}.{} - {}: {error}",
                 descriptor::get_script_path(object),
                 property.name,
-                drawer.get_key()
+                attribute.get_key()
             );
             None
         }
     }
 }
 
-/// A condition that fails to evaluate counts as visible.
 pub fn is_visible(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
     property.metas.iter().all(|meta| match meta {
         MetaAttribute::ShowIf(condition) => condition.is_visible(object).unwrap_or_else(|error| {
@@ -49,7 +49,8 @@ pub fn validate_property(
     property: &PropertyDescriptor,
 ) {
     for attribute in &property.validators {
-        match attribute_registry::get_validator(attribute).validate(object, property) {
+        let validator = attribute_registry::get_validator(attribute);
+        match validator.validate(object, property) {
             Ok(Some(value)) => edit_action.set_property_value(&property.name, &value),
             Ok(None) => {}
             Err(error) => {

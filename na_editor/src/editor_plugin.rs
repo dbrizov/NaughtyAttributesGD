@@ -24,8 +24,8 @@ impl IEditorPlugin for NaughtyEditorPlugin {
         na_print!("Editor plugin ready");
 
         let plugin = NaughtyEditorInspectorPlugin::new_gd();
-        self.base_mut()
-            .add_inspector_plugin(&plugin.clone().upcast::<EditorInspectorPlugin>());
+        let inspector_plugin: Gd<EditorInspectorPlugin> = plugin.clone().upcast();
+        self.base_mut().add_inspector_plugin(&inspector_plugin);
         self.inspector_plugin = Some(plugin);
 
         self.add_inspector_edit_hook();
@@ -37,8 +37,8 @@ impl IEditorPlugin for NaughtyEditorPlugin {
         self.remove_inspector_edit_hook();
 
         if let Some(plugin) = self.inspector_plugin.take() {
-            self.base_mut()
-                .remove_inspector_plugin(&plugin.upcast::<EditorInspectorPlugin>());
+            let inspector_plugin: Gd<EditorInspectorPlugin> = plugin.upcast();
+            self.base_mut().remove_inspector_plugin(&inspector_plugin);
         }
     }
 

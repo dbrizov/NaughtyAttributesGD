@@ -40,6 +40,7 @@ pub fn is_known_key(key: &str) -> bool {
         || ValidatorAttribute::is_known_key(key)
 }
 
+/// What an attribute needs while parsing.
 pub struct ParseContext<'a> {
     pub variant_type: VariantType,
     pub constants: &'a VarDictionary,

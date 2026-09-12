@@ -16,7 +16,8 @@ pub struct PropertyEditor {
 
 impl PropertyEditor {
     pub fn set_visible(&self, visible: bool) {
-        set_control_visible(&self.editor.clone().upcast(), visible);
+        let editor: Gd<Control> = self.editor.clone().upcast();
+        set_control_visible(&editor, visible);
         if let Some(decorations) = &self.decorations {
             set_control_visible(decorations, visible);
         }
@@ -63,8 +64,9 @@ fn create_decorations(object: &Gd<Object>, property: &PropertyDescriptor) -> Opt
     }
 
     let mut container: Gd<Control> = VBoxContainer::new_alloc().upcast();
-    for decorator in &property.decorators {
-        attribute_registry::get_decorator(decorator).decorate(&mut container, object);
+    for attribute in &property.decorators {
+        let decorator = attribute_registry::get_decorator(attribute);
+        decorator.decorate(&mut container, object);
     }
 
     Some(container)

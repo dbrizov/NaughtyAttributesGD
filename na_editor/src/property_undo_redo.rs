@@ -132,6 +132,7 @@ impl PropertyEditAction {
     }
 }
 
+/// The claimed properties' values at the start of one merged inspector action.
 pub struct EditSession {
     object: InstanceId,
     name: StringName,
@@ -199,5 +200,6 @@ impl EditSession {
 }
 
 fn get_history(undo_redo: &Gd<EditorUndoRedoManager>, object: &Gd<Object>) -> Option<Gd<UndoRedo>> {
-    undo_redo.get_history_undo_redo(undo_redo.get_object_history_id(object))
+    let history_id = undo_redo.get_object_history_id(object);
+    undo_redo.get_history_undo_redo(history_id)
 }
