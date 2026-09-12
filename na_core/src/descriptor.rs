@@ -19,7 +19,6 @@ impl PropertyDescriptor {
             hint: info.hint,
             hint_text: GString::from(info.hint_text.as_str()),
             usage: info.usage,
-            default_value: info.default_value.clone(),
             claimed: false,
             decorators: Vec::new(),
             drawer: None,
@@ -56,7 +55,6 @@ struct PropertyInfo {
     hint: PropertyHint,
     hint_text: String,
     usage: PropertyUsageFlags,
-    default_value: Variant,
 }
 
 pub struct PropertyDescriptor {
@@ -65,7 +63,6 @@ pub struct PropertyDescriptor {
     pub hint: PropertyHint,
     pub hint_text: GString,
     pub usage: PropertyUsageFlags,
-    pub default_value: Variant,
     pub claimed: bool,
     pub decorators: Vec<DecoratorAttribute>,
     pub drawer: Option<DrawerAttribute>,
@@ -92,7 +89,7 @@ impl ScriptSnapshot {
 
 pub struct ClassDescriptor {
     pub script_path: String,
-    pub category: String,
+    pub script_name: String,
     pub properties: Vec<PropertyDescriptor>,
     script_snapshot: ScriptSnapshot,
 }
@@ -115,10 +112,6 @@ impl ClassDescriptor {
                 hint: info.at("hint").to(),
                 hint_text: info.at("hint_string").to::<GString>().to_string(),
                 usage,
-                default_value: script_snapshot
-                    .default_values
-                    .get(&info.at("name"))
-                    .unwrap_or_default(),
             };
 
             if property_info.hint != PropertyHint::NONE || property_info.hint_text.is_empty() {
@@ -180,7 +173,7 @@ impl ClassDescriptor {
             properties.push(property);
         }
 
-        let category = script_path
+        let script_name = script_path
             .rsplit('/')
             .next()
             .unwrap_or_default()
@@ -188,7 +181,7 @@ impl ClassDescriptor {
 
         ClassDescriptor {
             script_path,
-            category,
+            script_name,
             properties,
             script_snapshot,
         }
@@ -217,17 +210,19 @@ fn is_editor_property(usage: PropertyUsageFlags) -> bool {
 }
 
 pub fn get_script_path(object: &Gd<Object>) -> String {
-    object
-        .get("script")
-        .try_to::<Gd<Script>>()
+    get_script(object)
         .map(|script| script.get_path().to_string())
         .unwrap_or_default()
+}
+
+fn get_script(object: &Gd<Object>) -> Option<Gd<Script>> {
+    object.get("script").try_to::<Gd<Script>>().ok()
 }
 
 /// Returns the script and its bases, base-first.
 fn get_script_chain(object: &Gd<Object>) -> Vec<Gd<Script>> {
     let mut chain = Vec::new();
-    let mut current = object.get("script").try_to::<Gd<Script>>().ok();
+    let mut current = get_script(object);
 
     while let Some(script) = current {
         current = script.get_base_script();
@@ -239,15 +234,9 @@ fn get_script_chain(object: &Gd<Object>) -> Vec<Gd<Script>> {
 }
 
 fn get_script_property_list(object: &Gd<Object>) -> Vec<VarDictionary> {
-    let mut properties = Vec::new();
-
-    for script in get_script_chain(object) {
-        for info in script.get_script_property_list().iter_shared() {
-            properties.push(info);
-        }
-    }
-
-    properties
+    get_script(object)
+        .map(|script| script.get_script_property_list().iter_shared().collect())
+        .unwrap_or_default()
 }
 
 fn get_constants(object: &Gd<Object>) -> VarDictionary {
@@ -264,13 +253,14 @@ fn get_constants(object: &Gd<Object>) -> VarDictionary {
 
 fn get_default_values(object: &Gd<Object>) -> VarDictionary {
     let mut default_values = VarDictionary::new();
+    let Some(script) = get_script(object) else {
+        return default_values;
+    };
 
-    for script in get_script_chain(object) {
-        for info in script.get_script_property_list().iter_shared() {
-            let name = info.at("name");
-            let text = name.to::<GString>().to_string();
-            default_values.set(&name, &script.get_property_default_value(text.as_str()));
-        }
+    for info in script.get_script_property_list().iter_shared() {
+        let name = info.at("name");
+        let text = name.to::<GString>().to_string();
+        default_values.set(&name, &script.get_property_default_value(text.as_str()));
     }
 
     default_values

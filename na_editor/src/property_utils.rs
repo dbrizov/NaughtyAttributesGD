@@ -6,7 +6,7 @@ use na_core::descriptor::{self, PropertyDescriptor};
 use na_logging::na_error;
 
 use crate::attribute_registry;
-use crate::property_edit_action::PropertyEditAction;
+use crate::property_undo_redo::PropertyEditAction;
 
 /// Returns `None` when the property has no drawer, or when its drawer failed.
 pub fn create_drawer_editor(
@@ -74,8 +74,4 @@ pub fn validate_properties(
             validate_property(edit_action, object, property);
         }
     }
-}
-
-pub fn capitalize_name(name: &StringName) -> GString {
-    GString::from(name).capitalize()
 }

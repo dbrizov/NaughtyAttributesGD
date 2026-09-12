@@ -1,11 +1,12 @@
 [gd_scene format=3 uid="uid://rl6ego67awxk"]
 
 [ext_resource type="Script" uid="uid://ck570lf6pp743" path="res://scripts/meta_tests/show_if.gd" id="1_tqfh0"]
-[ext_resource type="Script" uid="uid://hu0b451jnsv1" path="res://scripts/builtin_test.gd" id="2_ba4lm"]
 [ext_resource type="Script" uid="uid://ikljy4h7nwfa" path="res://scripts/validator_tests/min_value.gd" id="3_mnval"]
-[ext_resource type="Script" uid="uid://ctl33a8k6pvog" path="res://scripts/not_naughty_test.gd" id="4_vephn"]
+[ext_resource type="Script" uid="uid://ctl33a8k6pvog" path="res://scripts/builtin_test.gd" id="4_vephn"]
+[ext_resource type="Script" uid="uid://bls2bfonwwrqa" path="res://scripts/builtin_vs_naughty_test.gd" id="5_7qr1p"]
 [ext_resource type="Script" uid="uid://c3j8pl8ublw6e" path="res://scripts/decorator_tests/info_box.gd" id="5_ifbox"]
 [ext_resource type="Script" uid="uid://fanxmy68t1mb" path="res://scripts/drawer_tests/min_max_slider.gd" id="6_mnmax"]
+[ext_resource type="Script" uid="uid://c86kjh1oe6af3" path="res://scripts/export_group_test.gd" id="7_grpts"]
 
 [node name="root" type="Node3D" unique_id=1486502538]
 
@@ -29,8 +30,11 @@ script = ExtResource("1_tqfh0")
 [node name="min_value" type="Node3D" parent="validator_attributes" unique_id=1917403352]
 script = ExtResource("3_mnval")
 
-[node name="builtin" type="Node3D" parent="." unique_id=1383863991]
-script = ExtResource("2_ba4lm")
-
-[node name="not_naughty" type="Node3D" parent="." unique_id=1187945891]
+[node name="builtin" type="Node3D" parent="." unique_id=1187945891]
 script = ExtResource("4_vephn")
+
+[node name="builtin_vs_naughty" type="Node3D" parent="." unique_id=1383863991]
+script = ExtResource("5_7qr1p")
+
+[node name="export_group" type="Node3D" parent="." unique_id=243713661]
+script = ExtResource("7_grpts")

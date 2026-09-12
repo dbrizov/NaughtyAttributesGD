@@ -11,11 +11,10 @@ use crate::editor_inspector_plugin::NaughtyEditorInspectorPlugin;
 #[class(tool, init, base = EditorPlugin)]
 pub struct NaughtyEditorPlugin {
     inspector_plugin: Option<Gd<NaughtyEditorInspectorPlugin>>,
-    property_edited_handle: Option<ConnectHandle>,
+    inspector_edit_hook: Option<Callable>,
     version_changed_handle: Option<ConnectHandle>,
     resource_saved_handle: Option<ConnectHandle>,
     filesystem_changed_handle: Option<ConnectHandle>,
-    is_refreshing: bool,
     base: Base<EditorPlugin>,
 }
 
@@ -29,11 +28,13 @@ impl IEditorPlugin for NaughtyEditorPlugin {
             .add_inspector_plugin(&plugin.clone().upcast::<EditorInspectorPlugin>());
         self.inspector_plugin = Some(plugin);
 
+        self.add_inspector_edit_hook();
         self.connect_signals();
     }
 
     fn exit_tree(&mut self) {
         self.disconnect_signals();
+        self.remove_inspector_edit_hook();
 
         if let Some(plugin) = self.inspector_plugin.take() {
             self.base_mut()
@@ -44,6 +45,8 @@ impl IEditorPlugin for NaughtyEditorPlugin {
     fn on_notification(&mut self, what: NodeNotification) {
         if what == NodeNotification::EXTENSION_RELOADED {
             self.disconnect_signals();
+            self.remove_inspector_edit_hook();
+            self.add_inspector_edit_hook();
             self.connect_signals();
         } else if what == NodeNotification::APPLICATION_FOCUS_IN {
             self.request_rebuild_if_stale();
@@ -52,8 +55,28 @@ impl IEditorPlugin for NaughtyEditorPlugin {
 }
 
 impl NaughtyEditorPlugin {
+    fn add_inspector_edit_hook(&mut self) {
+        if self.inspector_edit_hook.is_some() {
+            return;
+        }
+
+        let Some(plugin) = self.inspector_plugin.as_ref() else {
+            return;
+        };
+
+        let hook = Callable::from_object_method(plugin, "on_inspector_edit");
+        self.base_mut().add_undo_redo_inspector_hook_callback(&hook);
+        self.inspector_edit_hook = Some(hook);
+    }
+
+    fn remove_inspector_edit_hook(&mut self) {
+        if let Some(hook) = self.inspector_edit_hook.take() {
+            self.base_mut()
+                .remove_undo_redo_inspector_hook_callback(&hook);
+        }
+    }
+
     fn connect_signals(&mut self) {
-        self.connect_property_edited();
         self.connect_version_changed();
         self.connect_resource_saved();
         self.connect_filesystem_changed();
@@ -63,7 +86,6 @@ impl NaughtyEditorPlugin {
         NaughtyEditorPlugin::disconnect_handle(self.filesystem_changed_handle.take());
         NaughtyEditorPlugin::disconnect_handle(self.resource_saved_handle.take());
         NaughtyEditorPlugin::disconnect_handle(self.version_changed_handle.take());
-        NaughtyEditorPlugin::disconnect_handle(self.property_edited_handle.take());
     }
 
     fn disconnect_handle(handle: Option<ConnectHandle>) {
@@ -72,37 +94,6 @@ impl NaughtyEditorPlugin {
         {
             handle.disconnect();
         }
-    }
-
-    fn connect_property_edited(&mut self) {
-        if self.property_edited_handle.is_some() {
-            return;
-        }
-
-        let Some(inspector) = EditorInterface::singleton().get_inspector() else {
-            return;
-        };
-
-        let handle = inspector
-            .signals()
-            .property_edited()
-            .connect_other(&*self, Self::on_property_edited);
-
-        self.property_edited_handle = Some(handle);
-    }
-
-    fn on_property_edited(&mut self, _property: GString) {
-        if self.is_refreshing {
-            return;
-        }
-
-        let Some(mut plugin) = self.inspector_plugin.clone() else {
-            return;
-        };
-
-        self.is_refreshing = true;
-        plugin.call_deferred("refresh_property_editors", &[]);
-        self.is_refreshing = false;
     }
 
     fn connect_version_changed(&mut self) {
