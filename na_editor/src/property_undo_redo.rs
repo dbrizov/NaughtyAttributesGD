@@ -8,25 +8,26 @@ use godot::prelude::*;
 
 use na_core::descriptor::ClassDescriptor;
 
-const MERGE_WINDOW: Duration = Duration::from_millis(800);
+/// Godot's own merge timeout in `UndoRedo::create_action`. Must match the engine.
+const GODOT_MERGE_WINDOW: Duration = Duration::from_millis(800);
 
-struct PropertyEdit {
+struct PropertyChange {
     name: StringName,
     old_value: Variant,
     new_value: Variant,
 }
 
-/// A batch of property edits, applied at once and then committed as one undo action.
+/// A batch of property changes, applied at once and then committed as one undo action.
 pub struct PropertyEditAction {
     object: Gd<Object>,
-    edits: Vec<PropertyEdit>,
+    changes: Vec<PropertyChange>,
 }
 
 impl PropertyEditAction {
     pub fn new(object: &Gd<Object>) -> Self {
         Self {
             object: Gd::clone(object),
-            edits: Vec::new(),
+            changes: Vec::new(),
         }
     }
 
@@ -39,9 +40,9 @@ impl PropertyEditAction {
         self.object.set(name, value);
         let new_value = self.object.get(name);
 
-        match self.edits.iter_mut().find(|edit| &edit.name == name) {
-            Some(edit) => edit.new_value = new_value,
-            None => self.edits.push(PropertyEdit {
+        match self.changes.iter_mut().find(|change| &change.name == name) {
+            Some(change) => change.new_value = new_value,
+            None => self.changes.push(PropertyChange {
                 name: name.clone(),
                 old_value: current_value,
                 new_value,
@@ -52,12 +53,12 @@ impl PropertyEditAction {
     /// Returns the names of the changed properties, or `None` if nothing changed.
     pub fn commit(self, action_name: &str) -> Option<Vec<StringName>> {
         let object = Gd::clone(&self.object);
-        let edits = self.get_changes();
-        if edits.is_empty() {
+        let changes = self.get_changes();
+        if changes.is_empty() {
             return None;
         }
 
-        let changed_properties = Some(edits.iter().map(|edit| edit.name.clone()).collect());
+        let changed_properties = Some(changes.iter().map(|change| change.name.clone()).collect());
 
         let Some(mut undo_redo) = EditorInterface::singleton().get_editor_undo_redo() else {
             return changed_properties;
@@ -69,9 +70,9 @@ impl PropertyEditAction {
             .backward_undo_ops(true)
             .done();
 
-        for edit in &edits {
-            undo_redo.add_do_property(&object, &edit.name, &edit.new_value);
-            undo_redo.add_undo_property(&object, &edit.name, &edit.old_value);
+        for change in &changes {
+            undo_redo.add_do_property(&object, &change.name, &change.new_value);
+            undo_redo.add_undo_property(&object, &change.name, &change.old_value);
         }
         undo_redo.commit_action_ex().execute(false).done();
 
@@ -86,49 +87,52 @@ impl PropertyEditAction {
     ) {
         let object = Gd::clone(&self.object);
         let mut history = get_history(undo_redo, &object);
-        let edits = self.revert();
+        let changes = self.revert();
 
-        for edit in &edits {
-            if edit.name == session.name {
-                let is_corrected = edit.new_value != *requested_value;
+        for change in &changes {
+            if change.name == session.name {
+                let is_corrected = change.new_value != *requested_value;
                 if is_corrected {
-                    undo_redo.add_do_property(&object, &edit.name, &edit.new_value);
+                    undo_redo.add_do_property(&object, &change.name, &change.new_value);
                 }
 
                 continue;
             }
 
-            if edit.old_value == edit.new_value {
+            if change.old_value == change.new_value {
                 continue;
             }
 
-            undo_redo.add_do_property(&object, &edit.name, &edit.new_value);
+            undo_redo.add_do_property(&object, &change.name, &change.new_value);
 
-            let origin = session.origins.get(&edit.name).unwrap_or(&edit.old_value);
+            let origin = session
+                .origins
+                .get(&change.name)
+                .unwrap_or(&change.old_value);
             if let Some(history) = history.as_mut() {
                 history.start_force_keep_in_merge_ends();
             }
 
-            undo_redo.add_undo_property(&object, &edit.name, origin);
+            undo_redo.add_undo_property(&object, &change.name, origin);
             if let Some(history) = history.as_mut() {
                 history.end_force_keep_in_merge_ends();
             }
         }
     }
 
-    fn revert(self) -> Vec<PropertyEdit> {
+    fn revert(self) -> Vec<PropertyChange> {
         let mut object = Gd::clone(&self.object);
-        for edit in self.edits.iter().rev() {
-            object.set(&edit.name, &edit.old_value);
+        for change in self.changes.iter().rev() {
+            object.set(&change.name, &change.old_value);
         }
 
-        self.edits
+        self.changes
     }
 
-    fn get_changes(self) -> Vec<PropertyEdit> {
-        self.edits
+    fn get_changes(self) -> Vec<PropertyChange> {
+        self.changes
             .into_iter()
-            .filter(|edit| edit.old_value != edit.new_value)
+            .filter(|change| change.old_value != change.new_value)
             .collect()
     }
 }
@@ -138,7 +142,7 @@ pub struct EditSession {
     object: InstanceId,
     name: StringName,
     origins: HashMap<StringName, Variant>,
-    last_edit: Instant,
+    last_edit_time: Instant,
     next_version: u64,
 }
 
@@ -182,7 +186,7 @@ impl EditSession {
             object: object.instance_id(),
             name: name.clone(),
             origins,
-            last_edit: Instant::now(),
+            last_edit_time: Instant::now(),
             next_version: version + 1,
         }
     }
@@ -190,12 +194,12 @@ impl EditSession {
     fn continues(&self, object: &Gd<Object>, name: &StringName, version: u64) -> bool {
         self.object == object.instance_id()
             && &self.name == name
-            && self.last_edit.elapsed() < MERGE_WINDOW
+            && self.last_edit_time.elapsed() < GODOT_MERGE_WINDOW
             && self.next_version == version
     }
 
     fn advance(&mut self, version: u64) {
-        self.last_edit = Instant::now();
+        self.last_edit_time = Instant::now();
         self.next_version = version;
     }
 }
