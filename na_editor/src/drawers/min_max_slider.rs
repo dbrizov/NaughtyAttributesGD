@@ -1,5 +1,5 @@
 use godot::classes::control::SizeFlags;
-use godot::classes::{Control, EditorProperty, EditorSpinSlider, HBoxContainer, IEditorProperty};
+use godot::classes::{EditorProperty, EditorSpinSlider, HBoxContainer, IEditorProperty};
 use godot::prelude::*;
 
 use na_core::attributes::drawer::min_max_slider::{self, MinMaxSlider};
@@ -124,8 +124,8 @@ impl NaughtyMinMaxSlider {
 
         let mut base = self.base_mut();
         base.add_child(&row);
-        base.add_focusable(&Gd::clone(&min_slider).upcast::<Control>());
-        base.add_focusable(&Gd::clone(&max_slider).upcast::<Control>());
+        base.add_focusable(&min_slider);
+        base.add_focusable(&max_slider);
         drop(base);
 
         self.min_slider = Some(min_slider);

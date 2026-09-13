@@ -1,5 +1,5 @@
 use godot::classes::notify::NodeNotification;
-use godot::classes::{EditorInspectorPlugin, EditorInterface, EditorPlugin, IEditorPlugin, Script};
+use godot::classes::{EditorInterface, EditorPlugin, IEditorPlugin, Script};
 use godot::prelude::*;
 use godot::signal::ConnectHandle;
 
@@ -25,8 +25,7 @@ impl IEditorPlugin for NaughtyEditorPlugin {
         na_print!("Editor plugin ready");
 
         let plugin = NaughtyEditorInspectorPlugin::new_gd();
-        let inspector_plugin: Gd<EditorInspectorPlugin> = Gd::clone(&plugin).upcast();
-        self.base_mut().add_inspector_plugin(&inspector_plugin);
+        self.base_mut().add_inspector_plugin(&plugin);
         self.inspector_plugin = Some(plugin);
 
         self.add_inspector_edit_hook();
@@ -38,8 +37,7 @@ impl IEditorPlugin for NaughtyEditorPlugin {
         self.remove_inspector_edit_hook();
 
         if let Some(plugin) = self.inspector_plugin.take() {
-            let inspector_plugin: Gd<EditorInspectorPlugin> = plugin.upcast();
-            self.base_mut().remove_inspector_plugin(&inspector_plugin);
+            self.base_mut().remove_inspector_plugin(&plugin);
         }
     }
 
@@ -106,7 +104,7 @@ impl NaughtyEditorPlugin {
             return;
         };
 
-        let handle = Gd::clone(&undo_redo)
+        let handle = undo_redo
             .signals()
             .version_changed()
             .connect_other(&*self, Self::on_version_changed);

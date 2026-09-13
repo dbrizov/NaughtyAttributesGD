@@ -16,34 +16,36 @@ pub struct PropertyBlock {
 }
 
 impl PropertyBlock {
-    pub fn set_label(&self, label: &str) {
-        let mut editor = Gd::clone(&self.editor);
-        if editor.is_instance_valid() {
-            editor.set_label(label);
-            editor.queue_redraw();
+    pub fn set_label(&mut self, label: &str) {
+        if self.editor.is_instance_valid() {
+            self.editor.set_label(label);
+            self.editor.queue_redraw();
         }
     }
 
-    pub fn set_visible(&self, visible: bool) {
-        set_control_visible(&self.editor, visible);
-        if let Some(container) = &self.decorations_container {
+    pub fn set_visible(&mut self, visible: bool) {
+        set_control_visible(&mut self.editor, visible);
+        if let Some(container) = &mut self.decorations_container {
             set_control_visible(container, visible);
         }
     }
 
-    pub fn set_enabled(&self, enabled: bool) {
-        let mut editor = Gd::clone(&self.editor);
+    pub fn set_enabled(&mut self, enabled: bool) {
         let read_only = !enabled;
-        if editor.is_instance_valid() && editor.is_read_only() != read_only {
-            editor.set_read_only(read_only);
-            editor.queue_redraw();
+        if self.editor.is_instance_valid() && self.editor.is_read_only() != read_only {
+            self.editor.set_read_only(read_only);
+            self.editor.queue_redraw();
         }
     }
 }
 
-fn set_control_visible<T: Inherits<Control>>(control: &Gd<T>, visible: bool) {
-    let mut control: Gd<Control> = Gd::clone(control).upcast();
-    if control.is_instance_valid() && control.is_visible() != visible {
+fn set_control_visible<T: Inherits<Control>>(control: &mut Gd<T>, visible: bool) {
+    if !control.is_instance_valid() {
+        return;
+    }
+
+    let control = control.upcast_mut::<Control>();
+    if control.is_visible() != visible {
         control.set_visible(visible);
     }
 }
@@ -67,7 +69,7 @@ pub fn create_property_block(
         return None;
     };
 
-    let property_block = PropertyBlock {
+    let mut property_block = PropertyBlock {
         editor,
         decorations_container: create_decorations_container(object, property),
     };

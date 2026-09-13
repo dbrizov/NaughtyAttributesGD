@@ -51,14 +51,19 @@ impl PropertyEditAction {
     }
 
     /// Returns the names of the changed properties, or `None` if nothing changed.
-    pub fn commit(self, action_name: &str) -> Option<Vec<StringName>> {
-        let object = Gd::clone(&self.object);
-        let changes = self.get_changes();
-        if changes.is_empty() {
+    pub fn commit(mut self, action_name: &str) -> Option<Vec<StringName>> {
+        self.changes
+            .retain(|change| change.old_value != change.new_value);
+        if self.changes.is_empty() {
             return None;
         }
 
-        let changed_properties = Some(changes.iter().map(|change| change.name.clone()).collect());
+        let changed_properties = Some(
+            self.changes
+                .iter()
+                .map(|change| change.name.clone())
+                .collect(),
+        );
 
         let Some(mut undo_redo) = EditorInterface::singleton().get_editor_undo_redo() else {
             return changed_properties;
@@ -70,9 +75,9 @@ impl PropertyEditAction {
             .backward_undo_ops(true)
             .done();
 
-        for change in &changes {
-            undo_redo.add_do_property(&object, &change.name, &change.new_value);
-            undo_redo.add_undo_property(&object, &change.name, &change.old_value);
+        for change in &self.changes {
+            undo_redo.add_do_property(&self.object, &change.name, &change.new_value);
+            undo_redo.add_undo_property(&self.object, &change.name, &change.old_value);
         }
         undo_redo.commit_action_ex().execute(false).done();
 
@@ -80,20 +85,19 @@ impl PropertyEditAction {
     }
 
     pub fn add_to(
-        self,
+        mut self,
         undo_redo: &mut Gd<EditorUndoRedoManager>,
         session: &EditSession,
         requested_value: &Variant,
     ) {
-        let object = Gd::clone(&self.object);
-        let mut history = get_history(undo_redo, &object);
-        let changes = self.revert();
+        let mut history = get_history(undo_redo, &self.object);
+        self.revert();
 
-        for change in &changes {
+        for change in &self.changes {
             if change.name == session.name {
                 let is_corrected = change.new_value != *requested_value;
                 if is_corrected {
-                    undo_redo.add_do_property(&object, &change.name, &change.new_value);
+                    undo_redo.add_do_property(&self.object, &change.name, &change.new_value);
                 }
 
                 continue;
@@ -103,7 +107,7 @@ impl PropertyEditAction {
                 continue;
             }
 
-            undo_redo.add_do_property(&object, &change.name, &change.new_value);
+            undo_redo.add_do_property(&self.object, &change.name, &change.new_value);
 
             let origin = session
                 .origins
@@ -113,27 +117,17 @@ impl PropertyEditAction {
                 history.start_force_keep_in_merge_ends();
             }
 
-            undo_redo.add_undo_property(&object, &change.name, origin);
+            undo_redo.add_undo_property(&self.object, &change.name, origin);
             if let Some(history) = history.as_mut() {
                 history.end_force_keep_in_merge_ends();
             }
         }
     }
 
-    fn revert(self) -> Vec<PropertyChange> {
-        let mut object = Gd::clone(&self.object);
+    fn revert(&mut self) {
         for change in self.changes.iter().rev() {
-            object.set(&change.name, &change.old_value);
+            self.object.set(&change.name, &change.old_value);
         }
-
-        self.changes
-    }
-
-    fn get_changes(self) -> Vec<PropertyChange> {
-        self.changes
-            .into_iter()
-            .filter(|change| change.old_value != change.new_value)
-            .collect()
     }
 }
 

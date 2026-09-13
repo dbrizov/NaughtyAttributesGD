@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use godot::classes::{
-    Control, EditorInspectorPlugin, EditorInterface, EditorProperty, EditorUndoRedoManager,
+    EditorInspectorPlugin, EditorInterface, EditorProperty, EditorUndoRedoManager,
     IEditorInspectorPlugin, Script,
 };
 use godot::obj::InstanceId;
@@ -191,9 +191,8 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             self.base_mut().add_custom_control(container);
         }
 
-        let editor: Gd<Control> = Gd::clone(&property_block.editor).upcast();
         self.base_mut()
-            .add_property_editor(&GString::from(&name), &editor);
+            .add_property_editor(&GString::from(&name), &property_block.editor);
 
         if let Some(object_state) = self.state.borrow_mut().object_states.get_mut(&instance_id) {
             object_state.property_blocks.insert(name, property_block);
@@ -283,7 +282,8 @@ impl NaughtyEditorInspectorPlugin {
 
         for (instance_id, object, class) in &objects {
             for property in &class.properties {
-                let Some(property_block) = self.find_property_block(*instance_id, &property.name)
+                let Some(mut property_block) =
+                    self.find_property_block(*instance_id, &property.name)
                 else {
                     continue;
                 };
@@ -307,7 +307,8 @@ impl NaughtyEditorInspectorPlugin {
                 continue;
             };
 
-            if let Some(property_block) = self.find_property_block(instance_id, &property.name) {
+            if let Some(mut property_block) = self.find_property_block(instance_id, &property.name)
+            {
                 property_block.set_label(label);
             }
         }
