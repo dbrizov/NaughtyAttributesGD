@@ -128,6 +128,8 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             Variant::nil()
         })
         .call_deferred(&[]);
+
+        self.refresh_property_editors();
     }
 
     fn parse_property(
@@ -290,6 +292,9 @@ impl NaughtyEditorInspectorPlugin {
 
                 let visible = property_utils::is_visible(object, property);
                 property_editor.set_visible(visible);
+
+                let enabled = property_utils::is_enabled(object, property);
+                property_editor.set_enabled(enabled);
             }
         }
     }

@@ -61,6 +61,15 @@ impl IEditorProperty for NaughtyMinMaxSlider {
             slider.set_value_no_signal(max);
         }
     }
+
+    fn set_read_only(&mut self, read_only: bool) {
+        for slider in [&mut self.min_slider, &mut self.max_slider]
+            .into_iter()
+            .flatten()
+        {
+            slider.set_read_only(read_only);
+        }
+    }
 }
 
 #[godot_api]

@@ -22,6 +22,14 @@ impl PropertyEditor {
             set_control_visible(decorations, visible);
         }
     }
+
+    pub fn set_enabled(&self, enabled: bool) {
+        let mut editor = Gd::clone(&self.editor);
+        let read_only = !enabled;
+        if editor.is_instance_valid() && editor.is_read_only() != read_only {
+            editor.set_read_only(read_only);
+        }
+    }
 }
 
 fn set_control_visible(control: &Gd<Control>, visible: bool) {

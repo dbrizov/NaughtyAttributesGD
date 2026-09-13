@@ -1,7 +1,7 @@
 use godot::classes::EditorProperty;
 use godot::prelude::*;
 
-use na_core::attributes::meta::MetaAttribute::{self, HideIf, ShowIf};
+use na_core::attributes::meta::MetaAttribute::{self, DisableIf, EnableIf, HideIf, ShowIf};
 use na_core::descriptor::{self, PropertyDescriptor};
 use na_logging::na_error;
 
@@ -33,6 +33,15 @@ pub fn is_visible(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
     is_meta_query_satisfied(object, property, |meta, obj| match meta {
         ShowIf(attribute) => Some(attribute.is_visible(obj)),
         HideIf(attribute) => Some(attribute.is_visible(obj)),
+        EnableIf(_) | DisableIf(_) => None,
+    })
+}
+
+pub fn is_enabled(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
+    is_meta_query_satisfied(object, property, |meta, obj| match meta {
+        EnableIf(attribute) => Some(attribute.is_enabled(obj)),
+        DisableIf(attribute) => Some(attribute.is_enabled(obj)),
+        ShowIf(_) | HideIf(_) => None,
     })
 }
 
