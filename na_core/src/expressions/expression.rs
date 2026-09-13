@@ -74,7 +74,7 @@ impl Expression {
             };
 
             return Err(format!(
-                "'{}' - {}{hint}",
+                "'{}' failed: {}{hint}",
                 self.expression_text,
                 expression.get_error_text()
             ));

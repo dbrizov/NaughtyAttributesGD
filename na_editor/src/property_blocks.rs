@@ -2,7 +2,7 @@ use godot::classes::{Control, EditorInspector, EditorProperty, VBoxContainer};
 use godot::obj::Inherits;
 use godot::prelude::*;
 
-use na_core::descriptor::PropertyDescriptor;
+use na_core::descriptor::{self, PropertyDescriptor};
 use na_logging::na_error;
 
 use crate::attribute_registry;
@@ -65,7 +65,11 @@ pub fn create_property_block(
         .or_else(|| create_default_editor(object, property, wide));
 
     let Some(editor) = editor else {
-        na_error!("No property editor for '{}'", property.name);
+        na_error!(
+            "{}.{}: no property editor",
+            descriptor::get_script_path(object),
+            property.name
+        );
         return None;
     };
 
