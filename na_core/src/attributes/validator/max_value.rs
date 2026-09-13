@@ -4,20 +4,20 @@ use godot::prelude::*;
 use crate::attributes::ParseContext;
 use crate::expressions::number_expression::NumberExpression;
 
-pub const KEY: &str = "min_value";
+pub const KEY: &str = "max_value";
 
-pub struct MinValue {
-    min_value: NumberExpression,
+pub struct MaxValue {
+    max_value: NumberExpression,
 }
 
-impl MinValue {
+impl MaxValue {
     pub fn parse(raw_args: &str, context: &ParseContext) -> Result<Self, String> {
-        NumberExpression::parse(raw_args, context).map(|min_value| Self { min_value })
+        NumberExpression::parse(raw_args, context).map(|max_value| Self { max_value })
     }
 
     pub fn get_bounds(&self, object: &Gd<Object>) -> Result<(f64, f64), String> {
-        self.min_value
+        self.max_value
             .evaluate(object)
-            .map(|min| (min, f64::INFINITY))
+            .map(|max| (f64::NEG_INFINITY, max))
     }
 }

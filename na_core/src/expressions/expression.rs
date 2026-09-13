@@ -116,7 +116,7 @@ pub fn get_call_hint(object: &Gd<Object>) -> &'static str {
     }
 }
 
-pub fn normalize_operators(expression_text: &str) -> String {
+fn normalize_operators(expression_text: &str) -> String {
     let mut out = String::with_capacity(expression_text.len());
     let mut chars = expression_text.chars().peekable();
     let mut quote: Option<char> = None;

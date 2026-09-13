@@ -1,3 +1,4 @@
+mod max_value;
 mod min_value;
 
 use godot::prelude::*;

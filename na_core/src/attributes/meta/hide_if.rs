@@ -2,22 +2,20 @@ use godot::classes::Object;
 use godot::prelude::*;
 
 use crate::attributes::ParseContext;
-use crate::attributes::meta::condition::Condition;
+use crate::expressions::bool_expression::BoolExpression;
 
 pub const KEY: &str = "hide_if";
 
 pub struct HideIf {
-    condition: Condition,
+    expression: BoolExpression,
 }
 
 impl HideIf {
     pub fn parse(raw_args: &str, context: &ParseContext) -> Result<Self, String> {
-        Condition::parse(raw_args, context).map(|condition| Self { condition })
+        BoolExpression::parse(raw_args, context).map(|expression| Self { expression })
     }
 
     pub fn is_visible(&self, object: &Gd<Object>) -> Result<bool, String> {
-        self.condition
-            .is_satisfied(object)
-            .map(|satisfied| !satisfied)
+        self.expression.evaluate(object).map(|value| !value)
     }
 }

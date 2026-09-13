@@ -2,20 +2,20 @@ use godot::classes::Object;
 use godot::prelude::*;
 
 use crate::attributes::ParseContext;
-use crate::attributes::meta::condition::Condition;
+use crate::expressions::bool_expression::BoolExpression;
 
 pub const KEY: &str = "enable_if";
 
 pub struct EnableIf {
-    condition: Condition,
+    expression: BoolExpression,
 }
 
 impl EnableIf {
     pub fn parse(raw_args: &str, context: &ParseContext) -> Result<Self, String> {
-        Condition::parse(raw_args, context).map(|condition| Self { condition })
+        BoolExpression::parse(raw_args, context).map(|expression| Self { expression })
     }
 
     pub fn is_enabled(&self, object: &Gd<Object>) -> Result<bool, String> {
-        self.condition.is_satisfied(object)
+        self.expression.evaluate(object)
     }
 }

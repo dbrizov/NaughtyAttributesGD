@@ -2,7 +2,7 @@ use godot::prelude::*;
 
 use crate::annotation::split_args;
 use crate::attributes::ParseContext;
-use crate::expression::Expression;
+use crate::expressions::number_expression::NumberExpression;
 
 pub const KEY: &str = "min_max_slider";
 
@@ -10,8 +10,8 @@ pub const SUPPORTED_TYPES: &[VariantType] = &[VariantType::VECTOR2, VariantType:
 
 #[derive(Clone)]
 pub struct MinMaxSlider {
-    pub min_value: Expression,
-    pub max_value: Expression,
+    min_value: NumberExpression,
+    max_value: NumberExpression,
 }
 
 impl MinMaxSlider {
@@ -26,14 +26,14 @@ impl MinMaxSlider {
         };
 
         Ok(Self {
-            min_value: compile(min_value, context)?,
-            max_value: compile(max_value, context)?,
+            min_value: NumberExpression::parse(min_value, context)?,
+            max_value: NumberExpression::parse(max_value, context)?,
         })
     }
 
     pub fn evaluate_bounds(&self, object: &Gd<Object>) -> Result<(f64, f64), String> {
-        let min = self.min_value.evaluate_number(object)?;
-        let max = self.max_value.evaluate_number(object)?;
+        let min = self.min_value.evaluate(object)?;
+        let max = self.max_value.evaluate(object)?;
         if min > max {
             return Err(format!(
                 "the minimum {min} is greater than the maximum {max}"
@@ -42,17 +42,4 @@ impl MinMaxSlider {
 
         Ok((min, max))
     }
-}
-
-fn compile(source: &str, context: &ParseContext) -> Result<Expression, String> {
-    if source.is_empty() {
-        return Err("expected a numeric expression".to_string());
-    }
-
-    let expression = Expression::compile(source, context.constants);
-    if !expression.is_valid() {
-        return Err(expression.get_error().to_string());
-    }
-
-    Ok(expression)
 }

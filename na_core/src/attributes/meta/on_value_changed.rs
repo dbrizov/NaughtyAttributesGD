@@ -1,7 +1,7 @@
 use godot::classes::Object;
 use godot::prelude::*;
 
-use crate::expression::get_call_hint;
+use crate::expressions::expression::get_call_hint;
 
 pub const KEY: &str = "on_value_changed";
 

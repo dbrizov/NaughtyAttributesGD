@@ -1,12 +1,12 @@
 use godot::prelude::*;
 
-use na_core::attributes::validator::min_value::MinValue;
+use na_core::attributes::validator::max_value::MaxValue;
 use na_core::descriptor::PropertyDescriptor;
 
 use crate::property_utils;
 use crate::validators::IValidator;
 
-impl IValidator for MinValue {
+impl IValidator for MaxValue {
     fn validate(
         &self,
         object: &Gd<Object>,

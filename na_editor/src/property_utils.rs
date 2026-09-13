@@ -9,6 +9,7 @@ use na_logging::na_error;
 
 use crate::attribute_registry;
 use crate::property_undo_redo::PropertyEditAction;
+use crate::variant_utils;
 
 /// Returns `None` when the property has no drawer, or when its drawer failed.
 pub fn create_drawer_editor(
@@ -81,6 +82,19 @@ fn is_meta_query_satisfied(
     }
 
     satisfied
+}
+
+pub fn clamp_property(
+    object: &Gd<Object>,
+    property: &PropertyDescriptor,
+    min: f64,
+    max: f64,
+) -> Result<Option<Variant>, String> {
+    let value = object.get(&property.name);
+    let clamped_value = variant_utils::clamp(&value, min, max)?;
+    let is_clamped = clamped_value != value;
+
+    Ok(is_clamped.then_some(clamped_value))
 }
 
 pub fn validate_property(
