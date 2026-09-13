@@ -7,6 +7,7 @@ use na_logging::na_print;
 
 use crate::editor_inspector_plugin::NaughtyEditorInspectorPlugin;
 
+/// Installs the inspector and keeps its signals wired across hot reloads.
 #[derive(GodotClass)]
 #[class(tool, init, base = EditorPlugin)]
 pub struct NaughtyEditorPlugin {
@@ -118,7 +119,7 @@ impl NaughtyEditorPlugin {
             return;
         };
 
-        plugin.call_deferred("sync_property_editors", &[]);
+        plugin.call_deferred("sync_property_blocks", &[]);
     }
 
     fn connect_resource_saved(&mut self) {

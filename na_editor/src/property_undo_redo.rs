@@ -16,6 +16,7 @@ struct PropertyEdit {
     new_value: Variant,
 }
 
+/// A batch of property edits, applied at once and then committed as one undo action.
 pub struct PropertyEditAction {
     object: Gd<Object>,
     edits: Vec<PropertyEdit>,

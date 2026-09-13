@@ -1,8 +1,8 @@
 mod message_box;
 
-use godot::classes::Control;
+use godot::classes::VBoxContainer;
 use godot::prelude::*;
 
 pub trait IDecorator {
-    fn decorate(&self, container: &mut Gd<Control>, object: &Gd<Object>);
+    fn decorate(&self, container: &mut Gd<VBoxContainer>, object: &Gd<Object>);
 }

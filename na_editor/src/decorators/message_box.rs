@@ -2,7 +2,9 @@ use godot::builtin::Side;
 use godot::classes::control::SizeFlags;
 use godot::classes::text_server::AutowrapMode;
 use godot::classes::texture_rect::StretchMode;
-use godot::classes::{Control, HBoxContainer, Label, PanelContainer, StyleBoxFlat, TextureRect};
+use godot::classes::{
+    HBoxContainer, Label, PanelContainer, StyleBoxFlat, TextureRect, VBoxContainer,
+};
 use godot::global::VerticalAlignment;
 use godot::prelude::*;
 
@@ -12,7 +14,7 @@ use crate::decorators::IDecorator;
 use crate::editor_style;
 
 impl IDecorator for MessageBox {
-    fn decorate(&self, container: &mut Gd<Control>, _object: &Gd<Object>) {
+    fn decorate(&self, container: &mut Gd<VBoxContainer>, _object: &Gd<Object>) {
         let mut icon = TextureRect::new_alloc();
         if let Some(texture) = editor_style::get_icon(get_icon_name(self.severity)) {
             icon.set_texture(&texture);
