@@ -8,7 +8,7 @@
 [ext_resource type="Script" uid="uid://ikljy4h7nwfa" path="res://scripts/validator_tests/min_value.gd" id="3_mnval"]
 [ext_resource type="Script" uid="uid://ctl33a8k6pvog" path="res://scripts/builtin_test.gd" id="4_vephn"]
 [ext_resource type="Script" uid="uid://bls2bfonwwrqa" path="res://scripts/builtin_vs_naughty_test.gd" id="5_7qr1p"]
-[ext_resource type="Script" uid="uid://c3j8pl8ublw6e" path="res://scripts/decorator_tests/info_box.gd" id="5_ifbox"]
+[ext_resource type="Script" uid="uid://c3j8pl8ublw6e" path="res://scripts/decorator_tests/message_box.gd" id="5_ifbox"]
 [ext_resource type="Script" uid="uid://fanxmy68t1mb" path="res://scripts/drawer_tests/min_max_slider.gd" id="6_mnmax"]
 [ext_resource type="Script" uid="uid://c86kjh1oe6af3" path="res://scripts/export_group_test.gd" id="7_grpts"]
 
@@ -16,7 +16,7 @@
 
 [node name="decorator_attributes" type="Node3D" parent="." unique_id=118726862]
 
-[node name="info_box" type="Node3D" parent="decorator_attributes" unique_id=227631068]
+[node name="message_box" type="Node3D" parent="decorator_attributes" unique_id=227631068]
 script = ExtResource("5_ifbox")
 
 [node name="drawer_attributes" type="Node3D" parent="." unique_id=118726861]

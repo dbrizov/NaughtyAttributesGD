@@ -8,7 +8,7 @@ use crate::validators::IValidator;
 
 pub fn get_decorator(attribute: &DecoratorAttribute) -> &dyn IDecorator {
     match attribute {
-        DecoratorAttribute::InfoBox(info_box) => info_box,
+        DecoratorAttribute::MessageBox(message_box) => message_box,
     }
 }
 

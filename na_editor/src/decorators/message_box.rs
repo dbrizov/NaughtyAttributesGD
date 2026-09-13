@@ -6,12 +6,12 @@ use godot::classes::{Control, HBoxContainer, Label, PanelContainer, StyleBoxFlat
 use godot::global::VerticalAlignment;
 use godot::prelude::*;
 
-use na_core::attributes::decorator::info_box::{InfoBox, Severity};
+use na_core::attributes::decorator::message_box::{MessageBox, Severity};
 
 use crate::decorators::IDecorator;
 use crate::editor_style;
 
-impl IDecorator for InfoBox {
+impl IDecorator for MessageBox {
     fn decorate(&self, container: &mut Gd<Control>, _object: &Gd<Object>) {
         let mut icon = TextureRect::new_alloc();
         if let Some(texture) = editor_style::get_icon(get_icon_name(self.severity)) {

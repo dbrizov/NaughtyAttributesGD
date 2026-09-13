@@ -1,4 +1,4 @@
-mod info_box;
+mod message_box;
 
 use godot::classes::Control;
 use godot::prelude::*;
