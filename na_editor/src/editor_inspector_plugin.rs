@@ -10,13 +10,13 @@ use godot::obj::InstanceId;
 use godot::prelude::*;
 use godot::register::info::{PropertyHint, PropertyUsageFlags};
 
-use na_core::descriptor::{ClassDescriptor, PropertyDescriptor};
+use na_core::descriptor::{PropertyDescriptor, ScriptDescriptor};
 
 use crate::property_blocks::{self, PropertyBlock};
 use crate::property_undo_redo::{EditSession, PropertyChange, PropertyEditAction};
 use crate::property_utils;
 
-/// Set while a default editor is instantiated to prevent internal mutability raise conditions.
+/// Set while a default editor is instantiated to prevent internal mutability race conditions.
 struct InstantiationScope(Rc<Cell<bool>>);
 
 impl InstantiationScope {
@@ -34,8 +34,8 @@ impl Drop for InstantiationScope {
 
 /// The state of a Node or Resource the inspector is editing.
 struct ObjectState {
-    class: Rc<ClassDescriptor>,
     object: Gd<Object>,
+    script: Rc<ScriptDescriptor>,
     property_blocks: HashMap<StringName, PropertyBlock>,
     edit_action: Option<PropertyEditAction>,
 }
@@ -75,7 +75,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
         }
 
         object
-            .and_then(|object| self.create_naughty_class(&object))
+            .and_then(|object| self.create_naughty_script(&object))
             .is_some()
     }
 
@@ -84,7 +84,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             return;
         };
 
-        let Some(class) = self.create_naughty_class(&object) else {
+        let Some(script) = self.create_naughty_script(&object) else {
             return;
         };
 
@@ -95,8 +95,8 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
         state.object_states.insert(
             object.instance_id(),
             ObjectState {
-                class,
                 object: Gd::clone(&object),
+                script,
                 property_blocks: HashMap::new(),
                 edit_action: Some(PropertyEditAction::new(&object)),
             },
@@ -108,15 +108,15 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             return;
         };
 
-        let (edit_action, script_name) = {
+        let (script_name, edit_action) = {
             let mut state = self.state.borrow_mut();
             let Some(object_state) = state.object_states.get_mut(&object.instance_id()) else {
                 return;
             };
 
             (
+                object_state.script.name.clone(),
                 object_state.edit_action.take(),
-                object_state.class.script_name.clone(),
             )
         };
 
@@ -156,14 +156,14 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
         let name = StringName::from(&name);
         let instance_id = object.instance_id();
 
-        let (class, edit_action) = {
+        let (script, edit_action) = {
             let mut state = self.state.borrow_mut();
             let Some(object_state) = state.object_states.get_mut(&instance_id) else {
                 return false;
             };
 
             (
-                Rc::clone(&object_state.class),
+                Rc::clone(&object_state.script),
                 object_state.edit_action.take(),
             )
         };
@@ -172,7 +172,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             return false;
         };
 
-        let property_block = class
+        let property_block = script
             .find_property(&name)
             .filter(|property| property.claimed)
             .and_then(|property| {
@@ -217,9 +217,9 @@ impl NaughtyEditorInspectorPlugin {
             return;
         }
 
-        let Some(class) = self
-            .find_class(object.instance_id())
-            .or_else(|| self.create_naughty_class(&object))
+        let Some(script) = self
+            .find_script(object.instance_id())
+            .or_else(|| self.create_naughty_script(&object))
         else {
             return;
         };
@@ -231,14 +231,14 @@ impl NaughtyEditorInspectorPlugin {
         {
             let _base = self.base_mut();
             let session =
-                EditSession::resume(&mut edit_session, &undo_redo, &object, &class, &name);
+                EditSession::resume(&mut edit_session, &undo_redo, &object, &script, &name);
             edit_action.set_property_value(&name, &value);
-            property_utils::validate_properties(&mut edit_action, &object, &class.properties);
+            property_utils::validate_properties(&mut edit_action, &object, &script.properties);
             edit_action.add_to(&mut undo_redo, session, &value);
         }
 
         self.state.borrow_mut().edit_session = edit_session;
-        self.defer_value_changed_callbacks(object, class, edit_action.into_changes());
+        self.defer_value_changed_callbacks(object, script, edit_action.into_changes());
         self.base_mut().call_deferred("sync_property_blocks", &[]);
     }
 
@@ -283,9 +283,9 @@ impl NaughtyEditorInspectorPlugin {
             return;
         }
 
-        let stale = match self.find_class(object.instance_id()) {
-            Some(class) => class.is_stale(&object),
-            None => ClassDescriptor::from_object(&object).is_naughty(),
+        let stale = match self.find_script(object.instance_id()) {
+            Some(script) => script.is_stale(&object),
+            None => ScriptDescriptor::from_object(&object).is_naughty(),
         };
 
         if stale {
@@ -296,9 +296,9 @@ impl NaughtyEditorInspectorPlugin {
 
 impl NaughtyEditorInspectorPlugin {
     /// Returns `None` if the object's script is not naughty.
-    fn create_naughty_class(&self, object: &Gd<Object>) -> Option<Rc<ClassDescriptor>> {
-        let class = Rc::new(ClassDescriptor::from_object(object));
-        class.is_naughty().then_some(class)
+    fn create_naughty_script(&self, object: &Gd<Object>) -> Option<Rc<ScriptDescriptor>> {
+        let script = Rc::new(ScriptDescriptor::from_object(object));
+        script.is_naughty().then_some(script)
     }
 
     fn create_property_block(
@@ -313,12 +313,12 @@ impl NaughtyEditorInspectorPlugin {
         property_blocks::create_property_block(edit_action, object, property, wide)
     }
 
-    fn find_class(&self, instance_id: InstanceId) -> Option<Rc<ClassDescriptor>> {
+    fn find_script(&self, instance_id: InstanceId) -> Option<Rc<ScriptDescriptor>> {
         self.state
             .borrow()
             .object_states
             .get(&instance_id)
-            .map(|object_state| Rc::clone(&object_state.class))
+            .map(|object_state| Rc::clone(&object_state.script))
     }
 
     fn find_property_block(
@@ -334,7 +334,7 @@ impl NaughtyEditorInspectorPlugin {
     }
 
     fn refresh_property_blocks(&self) {
-        let objects: Vec<(InstanceId, Gd<Object>, Rc<ClassDescriptor>)> = self
+        let objects: Vec<(InstanceId, Gd<Object>, Rc<ScriptDescriptor>)> = self
             .state
             .borrow()
             .object_states
@@ -344,13 +344,13 @@ impl NaughtyEditorInspectorPlugin {
                 (
                     *instance_id,
                     Gd::clone(&object_state.object),
-                    Rc::clone(&object_state.class),
+                    Rc::clone(&object_state.script),
                 )
             })
             .collect();
 
-        for (instance_id, object, class) in &objects {
-            for property in &class.properties {
+        for (instance_id, object, script) in &objects {
+            for property in &script.properties {
                 let Some(mut property_block) =
                     self.find_property_block(*instance_id, &property.name)
                 else {
@@ -367,11 +367,11 @@ impl NaughtyEditorInspectorPlugin {
     }
 
     fn apply_property_labels(&self, instance_id: InstanceId) {
-        let Some(class) = self.find_class(instance_id) else {
+        let Some(script) = self.find_script(instance_id) else {
             return;
         };
 
-        for property in &class.properties {
+        for property in &script.properties {
             let Some(label) = property_utils::get_label(property) else {
                 continue;
             };
@@ -386,7 +386,7 @@ impl NaughtyEditorInspectorPlugin {
     fn defer_value_changed_callbacks(
         &self,
         mut object: Gd<Object>,
-        class: Rc<ClassDescriptor>,
+        script: Rc<ScriptDescriptor>,
         changes: Vec<PropertyChange>,
     ) {
         if changes.is_empty() {
@@ -396,7 +396,7 @@ impl NaughtyEditorInspectorPlugin {
         Callable::from_fn("call_value_changed_callbacks", move |_args| {
             if object.is_instance_valid() {
                 for change in &changes {
-                    if let Some(property) = class.find_property(&change.name) {
+                    if let Some(property) = script.find_property(&change.name) {
                         property_utils::call_value_changed_callbacks(
                             &mut object,
                             property,

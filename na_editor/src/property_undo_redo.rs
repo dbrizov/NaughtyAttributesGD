@@ -6,7 +6,7 @@ use godot::classes::{EditorInterface, EditorUndoRedoManager, UndoRedo};
 use godot::obj::InstanceId;
 use godot::prelude::*;
 
-use na_core::descriptor::ClassDescriptor;
+use na_core::descriptor::ScriptDescriptor;
 
 /// Godot's own merge timeout in `UndoRedo::create_action`. Must match the engine.
 const GODOT_MERGE_WINDOW: Duration = Duration::from_millis(800);
@@ -139,7 +139,7 @@ impl EditSession {
         slot: &'a mut Option<Self>,
         undo_redo: &Gd<EditorUndoRedoManager>,
         object: &Gd<Object>,
-        class: &ClassDescriptor,
+        script: &ScriptDescriptor,
         name: &StringName,
     ) -> &'a Self {
         let version = get_history(undo_redo, object)
@@ -154,16 +154,16 @@ impl EditSession {
             *slot = None;
         }
 
-        slot.get_or_insert_with(|| Self::begin(object, class, name, version))
+        slot.get_or_insert_with(|| Self::begin(object, script, name, version))
     }
 
     fn begin(
         object: &Gd<Object>,
-        class: &ClassDescriptor,
+        script: &ScriptDescriptor,
         name: &StringName,
         version: u64,
     ) -> Self {
-        let origins = class
+        let origins = script
             .properties
             .iter()
             .filter(|property| property.claimed)
