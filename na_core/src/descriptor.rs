@@ -196,7 +196,7 @@ impl ClassDescriptor {
         ScriptSnapshot::from_object(object) != self.script_snapshot
     }
 
-    pub fn find(&self, name: &StringName) -> Option<&PropertyDescriptor> {
+    pub fn find_property(&self, name: &StringName) -> Option<&PropertyDescriptor> {
         self.properties
             .iter()
             .find(|property| &property.name == name)

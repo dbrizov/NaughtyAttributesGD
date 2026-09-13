@@ -11,7 +11,6 @@ use na_core::descriptor::ClassDescriptor;
 /// Godot's own merge timeout in `UndoRedo::create_action`. Must match the engine.
 const GODOT_MERGE_WINDOW: Duration = Duration::from_millis(800);
 
-#[derive(Clone)]
 pub struct PropertyChange {
     pub name: StringName,
     pub old_value: Variant,
@@ -30,10 +29,6 @@ impl PropertyEditAction {
             object: Gd::clone(object),
             changes: Vec::new(),
         }
-    }
-
-    pub fn into_changes(&self) -> Vec<PropertyChange> {
-        self.changes.clone()
     }
 
     pub fn set_property_value(&mut self, name: &StringName, value: &Variant) {
@@ -55,23 +50,15 @@ impl PropertyEditAction {
         }
     }
 
-    /// Returns the names of the changed properties, or `None` if nothing changed.
-    pub fn commit(mut self, action_name: &str) -> Option<Vec<StringName>> {
+    pub fn commit(mut self, action_name: &str) {
         self.changes
             .retain(|change| change.old_value != change.new_value);
         if self.changes.is_empty() {
-            return None;
+            return;
         }
 
-        let changed_properties = Some(
-            self.changes
-                .iter()
-                .map(|change| change.name.clone())
-                .collect(),
-        );
-
         let Some(mut undo_redo) = EditorInterface::singleton().get_editor_undo_redo() else {
-            return changed_properties;
+            return;
         };
 
         undo_redo
@@ -85,8 +72,6 @@ impl PropertyEditAction {
             undo_redo.add_undo_property(&self.object, &change.name, &change.old_value);
         }
         undo_redo.commit_action_ex().execute(false).done();
-
-        changed_properties
     }
 
     pub fn add_to(
@@ -127,6 +112,10 @@ impl PropertyEditAction {
                 history.end_force_keep_in_merge_ends();
             }
         }
+    }
+
+    pub fn into_changes(self) -> Vec<PropertyChange> {
+        self.changes
     }
 
     fn revert(&mut self) {

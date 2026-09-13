@@ -49,10 +49,6 @@ impl Expression {
         self.valid
     }
 
-    pub fn get_expression_text(&self) -> &str {
-        &self.expression_text
-    }
-
     pub fn get_error(&self) -> &str {
         &self.error
     }

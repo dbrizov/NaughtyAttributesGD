@@ -106,7 +106,7 @@ impl PropertyAnnotation {
     }
 }
 
-pub fn trim_builtin_args(raw_args: &str) -> String {
+fn trim_builtin_args(raw_args: &str) -> String {
     raw_args
         .split(',')
         .map(str::trim)
@@ -121,7 +121,7 @@ pub fn split_args(raw_args: &str) -> Vec<String> {
         .collect()
 }
 
-pub fn split_unescaped(text: &str, delimiter: char) -> Vec<&str> {
+fn split_unescaped(text: &str, delimiter: char) -> Vec<&str> {
     let mut parts = Vec::new();
     let mut start = 0;
     let mut chars = text.char_indices();
@@ -139,7 +139,7 @@ pub fn split_unescaped(text: &str, delimiter: char) -> Vec<&str> {
     parts
 }
 
-pub fn first_unescaped(text: &str, needle: char) -> Option<usize> {
+fn first_unescaped(text: &str, needle: char) -> Option<usize> {
     let mut chars = text.char_indices();
 
     while let Some((index, character)) = chars.next() {

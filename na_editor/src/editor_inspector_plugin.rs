@@ -173,7 +173,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
         };
 
         let property_block = class
-            .find(&name)
+            .find_property(&name)
             .filter(|property| property.claimed)
             .and_then(|property| {
                 self.create_property_block(&mut edit_action, &object, property, wide)
@@ -396,7 +396,7 @@ impl NaughtyEditorInspectorPlugin {
         Callable::from_fn("call_value_changed_callbacks", move |_args| {
             if object.is_instance_valid() {
                 for change in &changes {
-                    if let Some(property) = class.find(&change.name) {
+                    if let Some(property) = class.find_property(&change.name) {
                         property_utils::call_value_changed_callbacks(
                             &mut object,
                             property,
