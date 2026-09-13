@@ -1,7 +1,9 @@
 use godot::classes::EditorProperty;
 use godot::prelude::*;
 
-use na_core::attributes::meta::MetaAttribute::{self, DisableIf, EnableIf, HideIf, ShowIf};
+use na_core::attributes::meta::MetaAttribute::{
+    self, DisableIf, EnableIf, HideIf, ReadOnly, ShowIf,
+};
 use na_core::descriptor::{self, PropertyDescriptor};
 use na_logging::na_error;
 
@@ -31,33 +33,30 @@ pub fn create_drawer_editor(
 
 pub fn is_visible(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
     is_meta_query_satisfied(object, property, |meta, obj| match meta {
-        ShowIf(attribute) => Some(attribute.is_visible(obj)),
-        HideIf(attribute) => Some(attribute.is_visible(obj)),
-        EnableIf(_) | DisableIf(_) => None,
+        ShowIf(attribute) => attribute.is_visible(obj),
+        HideIf(attribute) => attribute.is_visible(obj),
+        EnableIf(_) | DisableIf(_) | ReadOnly => Ok(true),
     })
 }
 
 pub fn is_enabled(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
     is_meta_query_satisfied(object, property, |meta, obj| match meta {
-        EnableIf(attribute) => Some(attribute.is_enabled(obj)),
-        DisableIf(attribute) => Some(attribute.is_enabled(obj)),
-        ShowIf(_) | HideIf(_) => None,
+        EnableIf(attribute) => attribute.is_enabled(obj),
+        DisableIf(attribute) => attribute.is_enabled(obj),
+        ReadOnly => Ok(false),
+        ShowIf(_) | HideIf(_) => Ok(true),
     })
 }
 
 fn is_meta_query_satisfied(
     object: &Gd<Object>,
     property: &PropertyDescriptor,
-    query: impl Fn(&MetaAttribute, &Gd<Object>) -> Option<Result<bool, String>>,
+    query: impl Fn(&MetaAttribute, &Gd<Object>) -> Result<bool, String>,
 ) -> bool {
     let mut satisfied = true;
 
     for meta in &property.metas {
-        let Some(result) = query(meta, object) else {
-            continue;
-        };
-
-        satisfied &= result.unwrap_or_else(|error| {
+        satisfied &= query(meta, object).unwrap_or_else(|error| {
             na_error!(
                 "{}.{} - {}: {error}",
                 descriptor::get_script_path(object),

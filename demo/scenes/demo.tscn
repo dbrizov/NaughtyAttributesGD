@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://b5w75w2demirn" path="res://scripts/meta_tests/disable_if.gd" id="2_dsbif"]
 [ext_resource type="Script" uid="uid://wns0slmxe7lj" path="res://scripts/meta_tests/enable_if.gd" id="2_enbif"]
 [ext_resource type="Script" uid="uid://vh54h1fsrmf5" path="res://scripts/meta_tests/hide_if.gd" id="2_hidif"]
+[ext_resource type="Script" uid="uid://dpdbiq8qra41w" path="res://scripts/meta_tests/read_only.gd" id="2_rdonl"]
 [ext_resource type="Script" uid="uid://ikljy4h7nwfa" path="res://scripts/validator_tests/min_value.gd" id="3_mnval"]
 [ext_resource type="Script" uid="uid://ctl33a8k6pvog" path="res://scripts/builtin_test.gd" id="4_vephn"]
 [ext_resource type="Script" uid="uid://bls2bfonwwrqa" path="res://scripts/builtin_vs_naughty_test.gd" id="5_7qr1p"]
@@ -36,6 +37,9 @@ script = ExtResource("2_enbif")
 
 [node name="disable_if" type="Node3D" parent="meta_attributes" unique_id=227631072]
 script = ExtResource("2_dsbif")
+
+[node name="read_only" type="Node3D" parent="meta_attributes" unique_id=227631073]
+script = ExtResource("2_rdonl")
 
 [node name="validator_attributes" type="Node3D" parent="." unique_id=1633452842]
 
