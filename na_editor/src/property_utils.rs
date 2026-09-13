@@ -2,7 +2,7 @@ use godot::classes::EditorProperty;
 use godot::prelude::*;
 
 use na_core::attributes::meta::MetaAttribute::{
-    self, DisableIf, EnableIf, HideIf, ReadOnly, ShowIf,
+    self, DisableIf, EnableIf, HideIf, Label, ReadOnly, ShowIf,
 };
 use na_core::descriptor::{self, PropertyDescriptor};
 use na_logging::na_error;
@@ -31,11 +31,22 @@ pub fn create_drawer_editor(
     }
 }
 
+pub fn get_label(property: &PropertyDescriptor) -> Option<&str> {
+    property
+        .metas
+        .iter()
+        .filter_map(|meta| match meta {
+            Label(attribute) => Some(attribute.text.as_str()),
+            ShowIf(_) | HideIf(_) | EnableIf(_) | DisableIf(_) | ReadOnly => None,
+        })
+        .next_back()
+}
+
 pub fn is_visible(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
     is_meta_query_satisfied(object, property, |meta, obj| match meta {
         ShowIf(attribute) => attribute.is_visible(obj),
         HideIf(attribute) => attribute.is_visible(obj),
-        EnableIf(_) | DisableIf(_) | ReadOnly => Ok(true),
+        EnableIf(_) | DisableIf(_) | ReadOnly | Label(_) => Ok(true),
     })
 }
 
@@ -44,7 +55,7 @@ pub fn is_enabled(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
         EnableIf(attribute) => attribute.is_enabled(obj),
         DisableIf(attribute) => attribute.is_enabled(obj),
         ReadOnly => Ok(false),
-        ShowIf(_) | HideIf(_) => Ok(true),
+        ShowIf(_) | HideIf(_) | Label(_) => Ok(true),
     })
 }
 

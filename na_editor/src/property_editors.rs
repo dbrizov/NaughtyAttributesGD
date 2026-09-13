@@ -15,6 +15,14 @@ pub struct PropertyEditor {
 }
 
 impl PropertyEditor {
+    pub fn set_label(&self, label: &str) {
+        let mut editor = Gd::clone(&self.editor);
+        if editor.is_instance_valid() {
+            editor.set_label(label);
+            editor.queue_redraw();
+        }
+    }
+
     pub fn set_visible(&self, visible: bool) {
         let editor: Gd<Control> = Gd::clone(&self.editor).upcast();
         set_control_visible(&editor, visible);

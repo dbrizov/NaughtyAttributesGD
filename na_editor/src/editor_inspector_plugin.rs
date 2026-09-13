@@ -129,6 +129,7 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
         })
         .call_deferred(&[]);
 
+        self.apply_property_labels(object.instance_id());
         self.refresh_property_editors();
     }
 
@@ -215,15 +216,10 @@ impl NaughtyEditorInspectorPlugin {
             return;
         }
 
-        let class = self
-            .state
-            .borrow()
-            .objects
-            .get(&object.instance_id())
-            .map(|object_state| Rc::clone(&object_state.class))
-            .or_else(|| self.create_naughty_class(&object));
-
-        let Some(class) = class else {
+        let Some(class) = self
+            .find_class(object.instance_id())
+            .or_else(|| self.create_naughty_class(&object))
+        else {
             return;
         };
 
@@ -299,6 +295,22 @@ impl NaughtyEditorInspectorPlugin {
         }
     }
 
+    fn apply_property_labels(&self, instance_id: InstanceId) {
+        let Some(class) = self.find_class(instance_id) else {
+            return;
+        };
+
+        for property in &class.properties {
+            let Some(label) = property_utils::get_label(property) else {
+                continue;
+            };
+
+            if let Some(property_editor) = self.find_property_editor(instance_id, &property.name) {
+                property_editor.set_label(label);
+            }
+        }
+    }
+
     #[func]
     fn rebuild_if_stale(&self) {
         let Some(mut object) = EditorInterface::singleton()
@@ -317,14 +329,7 @@ impl NaughtyEditorInspectorPlugin {
             return;
         }
 
-        let class = self
-            .state
-            .borrow()
-            .objects
-            .get(&object.instance_id())
-            .map(|object_state| Rc::clone(&object_state.class));
-
-        let stale = match class {
+        let stale = match self.find_class(object.instance_id()) {
             Some(class) => class.is_stale(&object),
             None => ClassDescriptor::from_object(&object).is_naughty(),
         };
@@ -352,6 +357,14 @@ impl NaughtyEditorInspectorPlugin {
         let _scope = InstantiationScope::enter(&self.instantiating);
         let _base = self.base_mut();
         property_editors::create_property_editor(edit_action, object, property, wide)
+    }
+
+    fn find_class(&self, instance_id: InstanceId) -> Option<Rc<ClassDescriptor>> {
+        self.state
+            .borrow()
+            .objects
+            .get(&instance_id)
+            .map(|object_state| Rc::clone(&object_state.class))
     }
 
     fn find_property_editor(

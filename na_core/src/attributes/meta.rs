@@ -2,6 +2,7 @@ pub mod condition;
 pub mod disable_if;
 pub mod enable_if;
 pub mod hide_if;
+pub mod label;
 pub mod read_only;
 pub mod show_if;
 
@@ -9,6 +10,7 @@ use crate::attributes::ParseContext;
 use disable_if::DisableIf;
 use enable_if::EnableIf;
 use hide_if::HideIf;
+use label::Label;
 use show_if::ShowIf;
 
 pub enum MetaAttribute {
@@ -17,6 +19,7 @@ pub enum MetaAttribute {
     EnableIf(EnableIf),
     DisableIf(DisableIf),
     ReadOnly,
+    Label(Label),
 }
 
 impl MetaAttribute {
@@ -27,6 +30,7 @@ impl MetaAttribute {
             enable_if::KEY => EnableIf::parse(raw_args, context).map(Self::EnableIf),
             disable_if::KEY => DisableIf::parse(raw_args, context).map(Self::DisableIf),
             read_only::KEY => Ok(Self::ReadOnly),
+            label::KEY => Label::parse(raw_args).map(Self::Label),
             _ => Err("unknown attribute".to_string()),
         }
     }
@@ -34,7 +38,12 @@ impl MetaAttribute {
     pub fn is_known_key(key: &str) -> bool {
         matches!(
             key,
-            show_if::KEY | hide_if::KEY | enable_if::KEY | disable_if::KEY | read_only::KEY
+            show_if::KEY
+                | hide_if::KEY
+                | enable_if::KEY
+                | disable_if::KEY
+                | read_only::KEY
+                | label::KEY
         )
     }
 
@@ -45,6 +54,7 @@ impl MetaAttribute {
             Self::EnableIf(_) => enable_if::KEY,
             Self::DisableIf(_) => disable_if::KEY,
             Self::ReadOnly => read_only::KEY,
+            Self::Label(_) => label::KEY,
         }
     }
 }
