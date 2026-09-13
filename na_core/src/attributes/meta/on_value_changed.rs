@@ -54,8 +54,8 @@ fn is_identifier(name: &str) -> bool {
 
     characters
         .next()
-        .is_some_and(|first| first.is_alphabetic() || first == '_')
-        && characters.all(|character| character.is_alphanumeric() || character == '_')
+        .is_some_and(|first| first.is_ascii_alphabetic() || first == '_')
+        && characters.all(|character| character.is_ascii_alphanumeric() || character == '_')
 }
 
 #[cfg(test)]
@@ -84,5 +84,10 @@ mod tests {
     #[test]
     fn rejects_a_name_starting_with_a_digit() {
         assert!(OnValueChanged::parse("1st_callback").is_err());
+    }
+
+    #[test]
+    fn rejects_a_non_ascii_name() {
+        assert!(OnValueChanged::parse("héllo").is_err());
     }
 }

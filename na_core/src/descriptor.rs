@@ -131,6 +131,13 @@ impl ClassDescriptor {
                 );
             }
 
+            for key in &annotation.ignored_builtin_keys {
+                na_error!(
+                    "{script_path}.{} - {key}: a property can have only one built-in hint, keeping the last one",
+                    property_info.name
+                );
+            }
+
             if !annotation.is_claimed() {
                 properties.push(PropertyDescriptor::unclaimed(&property_info));
                 continue;

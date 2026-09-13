@@ -55,6 +55,7 @@ pub struct PropertyAnnotation {
     pub builtin: Option<(String, String)>,
     pub attributes: Vec<AttributeEntry>,
     pub unknown_keys: Vec<String>,
+    pub ignored_builtin_keys: Vec<String>,
 }
 
 impl PropertyAnnotation {
@@ -73,7 +74,10 @@ impl PropertyAnnotation {
             };
 
             if builtin_hint_from_key(key).is_some() {
-                annotation.builtin = Some((key.to_string(), trim_builtin_args(raw_args)));
+                let builtin = (key.to_string(), trim_builtin_args(raw_args));
+                if let Some((ignored, _)) = annotation.builtin.replace(builtin) {
+                    annotation.ignored_builtin_keys.push(ignored);
+                }
             } else if is_known_key(key) {
                 annotation.attributes.push(AttributeEntry {
                     key: key.to_string(),
@@ -175,7 +179,7 @@ mod tests {
     use super::*;
 
     fn known(key: &str) -> bool {
-        matches!(key, "show_if" | "min_value" | "info_box")
+        matches!(key, "show_if" | "min_value" | "info_box" | "read_only")
     }
 
     #[test]
@@ -228,6 +232,53 @@ mod tests {
             Some(("multiline".to_string(), String::new()))
         );
         assert!(annotation.is_claimed());
+    }
+
+    #[test]
+    fn a_key_without_args_claims_the_property() {
+        let annotation = PropertyAnnotation::parse("read_only;show_if:a", known);
+        assert_eq!(annotation.attributes.len(), 2);
+        assert_eq!(annotation.attributes[0].key, "read_only");
+        assert_eq!(annotation.attributes[0].raw_args, "");
+        assert!(annotation.is_claimed());
+    }
+
+    #[test]
+    fn the_last_builtin_hint_wins() {
+        let annotation = PropertyAnnotation::parse("range:0,10;enum:One,Two", known);
+        assert_eq!(
+            annotation.builtin,
+            Some(("enum".to_string(), "One,Two".to_string()))
+        );
+        assert_eq!(annotation.ignored_builtin_keys, vec!["range".to_string()]);
+    }
+
+    #[test]
+    fn duplicate_keys_are_kept_in_written_order() {
+        let annotation = PropertyAnnotation::parse("show_if:a;show_if:b", known);
+        assert_eq!(annotation.attributes.len(), 2);
+        assert_eq!(annotation.attributes[0].raw_args, "a");
+        assert_eq!(annotation.attributes[1].raw_args, "b");
+    }
+
+    #[test]
+    fn a_trailing_backslash_is_dropped() {
+        assert_eq!(unescape("Damage\\"), "Damage");
+
+        let annotation = PropertyAnnotation::parse("info_box:Damage\\", known);
+        assert_eq!(
+            split_args(&annotation.attributes[0].raw_args),
+            vec!["Damage"]
+        );
+    }
+
+    #[test]
+    fn multibyte_characters_survive_splitting() {
+        assert_eq!(split_args("Дамаг, база"), vec!["Дамаг", "база"]);
+        assert_eq!(split_args(r"Дамаг\, база"), vec!["Дамаг, база"]);
+
+        let annotation = PropertyAnnotation::parse("info_box:Урон 🎯;show_if:a", known);
+        assert_eq!(annotation.attributes[0].raw_args, "Урон 🎯");
     }
 
     #[test]
