@@ -28,6 +28,7 @@ impl PropertyEditor {
         let read_only = !enabled;
         if editor.is_instance_valid() && editor.is_read_only() != read_only {
             editor.set_read_only(read_only);
+            editor.queue_redraw();
         }
     }
 }
