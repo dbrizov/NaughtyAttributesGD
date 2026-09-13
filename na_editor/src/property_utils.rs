@@ -1,7 +1,7 @@
 use godot::classes::EditorProperty;
 use godot::prelude::*;
 
-use na_core::attributes::meta::{MetaAttribute, show_if};
+use na_core::attributes::meta::MetaAttribute::{self, HideIf, ShowIf};
 use na_core::descriptor::{self, PropertyDescriptor};
 use na_logging::na_error;
 
@@ -30,17 +30,36 @@ pub fn create_drawer_editor(
 }
 
 pub fn is_visible(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
-    property.metas.iter().all(|meta| match meta {
-        MetaAttribute::ShowIf(condition) => condition.is_visible(object).unwrap_or_else(|error| {
+    is_meta_query_satisfied(object, property, |meta, obj| match meta {
+        ShowIf(attribute) => Some(attribute.is_visible(obj)),
+        HideIf(attribute) => Some(attribute.is_visible(obj)),
+    })
+}
+
+fn is_meta_query_satisfied(
+    object: &Gd<Object>,
+    property: &PropertyDescriptor,
+    query: impl Fn(&MetaAttribute, &Gd<Object>) -> Option<Result<bool, String>>,
+) -> bool {
+    let mut satisfied = true;
+
+    for meta in &property.metas {
+        let Some(result) = query(meta, object) else {
+            continue;
+        };
+
+        satisfied &= result.unwrap_or_else(|error| {
             na_error!(
                 "{}.{} - {}: {error}",
                 descriptor::get_script_path(object),
                 property.name,
-                show_if::KEY
+                meta.get_key()
             );
             true
-        }),
-    })
+        });
+    }
+
+    satisfied
 }
 
 pub fn validate_property(

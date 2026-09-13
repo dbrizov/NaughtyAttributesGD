@@ -14,7 +14,7 @@ var melee_class: String = "class_name"
 
 @export_custom(PROPERTY_HINT_NONE, "show_if:!is_immortal") var health: int = 100
 
-@export_custom(PROPERTY_HINT_NONE, "show_if:is_at_max_health()") var at_max_health: bool = true
+@export_custom(PROPERTY_HINT_NONE, "show_if:is_at_max_health()") var at_max_health: String = ""
 
 
 func is_at_max_health():
