@@ -71,11 +71,16 @@ impl Expression {
             .done();
 
         if expression.has_execute_failed() {
+            let hint = if self.expression_text.contains('(') {
+                get_call_hint(object)
+            } else {
+                ""
+            };
+
             return Err(format!(
-                "'{}' - {}{}",
+                "'{}' - {}{hint}",
                 self.expression_text,
-                expression.get_error_text(),
-                get_call_hint(object, &self.expression_text)
+                expression.get_error_text()
             ));
         }
 
@@ -101,11 +106,7 @@ impl Expression {
     }
 }
 
-fn get_call_hint(object: &Gd<Object>, expression_text: &str) -> &'static str {
-    if !expression_text.contains('(') {
-        return "";
-    }
-
+pub fn get_call_hint(object: &Gd<Object>) -> &'static str {
     let is_tool = object
         .get("script")
         .try_to::<Gd<Script>>()

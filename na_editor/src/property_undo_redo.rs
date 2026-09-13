@@ -11,10 +11,11 @@ use na_core::descriptor::ClassDescriptor;
 /// Godot's own merge timeout in `UndoRedo::create_action`. Must match the engine.
 const GODOT_MERGE_WINDOW: Duration = Duration::from_millis(800);
 
-struct PropertyChange {
-    name: StringName,
-    old_value: Variant,
-    new_value: Variant,
+#[derive(Clone)]
+pub struct PropertyChange {
+    pub name: StringName,
+    pub old_value: Variant,
+    pub new_value: Variant,
 }
 
 /// A batch of property changes, applied at once and then committed as one undo action.
@@ -29,6 +30,10 @@ impl PropertyEditAction {
             object: Gd::clone(object),
             changes: Vec::new(),
         }
+    }
+
+    pub fn into_changes(&self) -> Vec<PropertyChange> {
+        self.changes.clone()
     }
 
     pub fn set_property_value(&mut self, name: &StringName, value: &Variant) {
@@ -85,7 +90,7 @@ impl PropertyEditAction {
     }
 
     pub fn add_to(
-        mut self,
+        &mut self,
         undo_redo: &mut Gd<EditorUndoRedoManager>,
         session: &EditSession,
         requested_value: &Variant,

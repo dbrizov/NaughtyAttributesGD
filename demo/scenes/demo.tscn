@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://wns0slmxe7lj" path="res://scripts/meta_tests/enable_if.gd" id="2_enbif"]
 [ext_resource type="Script" uid="uid://vh54h1fsrmf5" path="res://scripts/meta_tests/hide_if.gd" id="2_hidif"]
 [ext_resource type="Script" uid="uid://b2dflccuwn6ka" path="res://scripts/meta_tests/label.gd" id="2_label"]
+[ext_resource type="Script" uid="uid://bsfoifcb7oh6s" path="res://scripts/meta_tests/on_value_changed.gd" id="2_onvch"]
 [ext_resource type="Script" uid="uid://dpdbiq8qra41w" path="res://scripts/meta_tests/read_only.gd" id="2_rdonl"]
 [ext_resource type="Script" uid="uid://ikljy4h7nwfa" path="res://scripts/validator_tests/min_value.gd" id="3_mnval"]
 [ext_resource type="Script" uid="uid://ctl33a8k6pvog" path="res://scripts/builtin_test.gd" id="4_vephn"]
@@ -44,6 +45,10 @@ script = ExtResource("2_rdonl")
 
 [node name="label" type="Node3D" parent="meta_attributes" unique_id=227631074]
 script = ExtResource("2_label")
+
+[node name="on_value_changed" type="Node3D" parent="meta_attributes" unique_id=227631075]
+script = ExtResource("2_onvch")
+power = 27
 
 [node name="validator_attributes" type="Node3D" parent="." unique_id=1633452842]
 

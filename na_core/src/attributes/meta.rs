@@ -3,6 +3,7 @@ pub mod disable_if;
 pub mod enable_if;
 pub mod hide_if;
 pub mod label;
+pub mod on_value_changed;
 pub mod read_only;
 pub mod show_if;
 
@@ -11,6 +12,7 @@ use disable_if::DisableIf;
 use enable_if::EnableIf;
 use hide_if::HideIf;
 use label::Label;
+use on_value_changed::OnValueChanged;
 use show_if::ShowIf;
 
 pub enum MetaAttribute {
@@ -20,6 +22,7 @@ pub enum MetaAttribute {
     DisableIf(DisableIf),
     ReadOnly,
     Label(Label),
+    OnValueChanged(OnValueChanged),
 }
 
 impl MetaAttribute {
@@ -31,6 +34,7 @@ impl MetaAttribute {
             disable_if::KEY => DisableIf::parse(raw_args, context).map(Self::DisableIf),
             read_only::KEY => Ok(Self::ReadOnly),
             label::KEY => Label::parse(raw_args).map(Self::Label),
+            on_value_changed::KEY => OnValueChanged::parse(raw_args).map(Self::OnValueChanged),
             _ => Err("unknown attribute".to_string()),
         }
     }
@@ -44,6 +48,7 @@ impl MetaAttribute {
                 | disable_if::KEY
                 | read_only::KEY
                 | label::KEY
+                | on_value_changed::KEY
         )
     }
 
@@ -55,6 +60,7 @@ impl MetaAttribute {
             Self::DisableIf(_) => disable_if::KEY,
             Self::ReadOnly => read_only::KEY,
             Self::Label(_) => label::KEY,
+            Self::OnValueChanged(_) => on_value_changed::KEY,
         }
     }
 }

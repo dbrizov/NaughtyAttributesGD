@@ -13,7 +13,7 @@ use godot::register::info::{PropertyHint, PropertyUsageFlags};
 use na_core::descriptor::{ClassDescriptor, PropertyDescriptor};
 
 use crate::property_blocks::{self, PropertyBlock};
-use crate::property_undo_redo::{EditSession, PropertyEditAction};
+use crate::property_undo_redo::{EditSession, PropertyChange, PropertyEditAction};
 use crate::property_utils;
 
 /// Set while a default editor is instantiated to prevent internal mutability raise conditions.
@@ -226,18 +226,19 @@ impl NaughtyEditorInspectorPlugin {
 
         let mut undo_redo = undo_redo;
         let mut edit_session = self.state.borrow_mut().edit_session.take();
+        let mut edit_action = PropertyEditAction::new(&object);
 
         {
             let _base = self.base_mut();
             let session =
                 EditSession::resume(&mut edit_session, &undo_redo, &object, &class, &name);
-            let mut edit_action = PropertyEditAction::new(&object);
             edit_action.set_property_value(&name, &value);
             property_utils::validate_properties(&mut edit_action, &object, &class.properties);
             edit_action.add_to(&mut undo_redo, session, &value);
         }
 
         self.state.borrow_mut().edit_session = edit_session;
+        self.defer_value_changed_callbacks(object, class, edit_action.into_changes());
         self.base_mut().call_deferred("sync_property_blocks", &[]);
     }
 
@@ -262,56 +263,6 @@ impl NaughtyEditorInspectorPlugin {
         }
 
         self.refresh_property_blocks();
-    }
-
-    fn refresh_property_blocks(&self) {
-        let objects: Vec<(InstanceId, Gd<Object>, Rc<ClassDescriptor>)> = self
-            .state
-            .borrow()
-            .object_states
-            .iter()
-            .filter(|(_, object_state)| object_state.object.is_instance_valid())
-            .map(|(instance_id, object_state)| {
-                (
-                    *instance_id,
-                    Gd::clone(&object_state.object),
-                    Rc::clone(&object_state.class),
-                )
-            })
-            .collect();
-
-        for (instance_id, object, class) in &objects {
-            for property in &class.properties {
-                let Some(mut property_block) =
-                    self.find_property_block(*instance_id, &property.name)
-                else {
-                    continue;
-                };
-
-                let visible = property_utils::is_visible(object, property);
-                property_block.set_visible(visible);
-
-                let enabled = property_utils::is_enabled(object, property);
-                property_block.set_enabled(enabled);
-            }
-        }
-    }
-
-    fn apply_property_labels(&self, instance_id: InstanceId) {
-        let Some(class) = self.find_class(instance_id) else {
-            return;
-        };
-
-        for property in &class.properties {
-            let Some(label) = property_utils::get_label(property) else {
-                continue;
-            };
-
-            if let Some(mut property_block) = self.find_property_block(instance_id, &property.name)
-            {
-                property_block.set_label(label);
-            }
-        }
     }
 
     #[func]
@@ -380,5 +331,84 @@ impl NaughtyEditorInspectorPlugin {
             .object_states
             .get(&instance_id)
             .and_then(|object_state| object_state.property_blocks.get(name).cloned())
+    }
+
+    fn refresh_property_blocks(&self) {
+        let objects: Vec<(InstanceId, Gd<Object>, Rc<ClassDescriptor>)> = self
+            .state
+            .borrow()
+            .object_states
+            .iter()
+            .filter(|(_, object_state)| object_state.object.is_instance_valid())
+            .map(|(instance_id, object_state)| {
+                (
+                    *instance_id,
+                    Gd::clone(&object_state.object),
+                    Rc::clone(&object_state.class),
+                )
+            })
+            .collect();
+
+        for (instance_id, object, class) in &objects {
+            for property in &class.properties {
+                let Some(mut property_block) =
+                    self.find_property_block(*instance_id, &property.name)
+                else {
+                    continue;
+                };
+
+                let visible = property_utils::is_visible(object, property);
+                property_block.set_visible(visible);
+
+                let enabled = property_utils::is_enabled(object, property);
+                property_block.set_enabled(enabled);
+            }
+        }
+    }
+
+    fn apply_property_labels(&self, instance_id: InstanceId) {
+        let Some(class) = self.find_class(instance_id) else {
+            return;
+        };
+
+        for property in &class.properties {
+            let Some(label) = property_utils::get_label(property) else {
+                continue;
+            };
+
+            if let Some(mut property_block) = self.find_property_block(instance_id, &property.name)
+            {
+                property_block.set_label(label);
+            }
+        }
+    }
+
+    fn defer_value_changed_callbacks(
+        &self,
+        mut object: Gd<Object>,
+        class: Rc<ClassDescriptor>,
+        changes: Vec<PropertyChange>,
+    ) {
+        if changes.is_empty() {
+            return;
+        }
+
+        Callable::from_fn("call_value_changed_callbacks", move |_args| {
+            if object.is_instance_valid() {
+                for change in &changes {
+                    if let Some(property) = class.find(&change.name) {
+                        property_utils::call_value_changed_callbacks(
+                            &mut object,
+                            property,
+                            &change.old_value,
+                            &change.new_value,
+                        );
+                    }
+                }
+            }
+
+            Variant::nil()
+        })
+        .call_deferred(&[]);
     }
 }

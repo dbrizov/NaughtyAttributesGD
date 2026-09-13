@@ -2,7 +2,7 @@ use godot::classes::EditorProperty;
 use godot::prelude::*;
 
 use na_core::attributes::meta::MetaAttribute::{
-    self, DisableIf, EnableIf, HideIf, Label, ReadOnly, ShowIf,
+    self, DisableIf, EnableIf, HideIf, Label, OnValueChanged, ReadOnly, ShowIf,
 };
 use na_core::descriptor::{self, PropertyDescriptor};
 use na_logging::na_error;
@@ -37,7 +37,9 @@ pub fn get_label(property: &PropertyDescriptor) -> Option<&str> {
         .iter()
         .filter_map(|meta| match meta {
             Label(attribute) => Some(attribute.text.as_str()),
-            ShowIf(_) | HideIf(_) | EnableIf(_) | DisableIf(_) | ReadOnly => None,
+            ShowIf(_) | HideIf(_) | EnableIf(_) | DisableIf(_) | ReadOnly | OnValueChanged(_) => {
+                None
+            }
         })
         .next_back()
 }
@@ -46,7 +48,7 @@ pub fn is_visible(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
     is_meta_query_satisfied(object, property, |meta, obj| match meta {
         ShowIf(attribute) => attribute.is_visible(obj),
         HideIf(attribute) => attribute.is_visible(obj),
-        EnableIf(_) | DisableIf(_) | ReadOnly | Label(_) => Ok(true),
+        EnableIf(_) | DisableIf(_) | ReadOnly | Label(_) | OnValueChanged(_) => Ok(true),
     })
 }
 
@@ -55,7 +57,7 @@ pub fn is_enabled(object: &Gd<Object>, property: &PropertyDescriptor) -> bool {
         EnableIf(attribute) => attribute.is_enabled(obj),
         DisableIf(attribute) => attribute.is_enabled(obj),
         ReadOnly => Ok(false),
-        ShowIf(_) | HideIf(_) | Label(_) => Ok(true),
+        ShowIf(_) | HideIf(_) | Label(_) | OnValueChanged(_) => Ok(true),
     })
 }
 
@@ -111,6 +113,29 @@ pub fn validate_properties(
     for property in properties {
         if is_visible(object, property) {
             validate_property(edit_action, object, property);
+        }
+    }
+}
+
+pub fn call_value_changed_callbacks(
+    object: &mut Gd<Object>,
+    property: &PropertyDescriptor,
+    old_value: &Variant,
+    new_value: &Variant,
+) {
+    for meta in &property.metas {
+        let result = match meta {
+            OnValueChanged(attribute) => attribute.call(object, old_value, new_value),
+            ShowIf(_) | HideIf(_) | EnableIf(_) | DisableIf(_) | ReadOnly | Label(_) => Ok(()),
+        };
+
+        if let Err(error) = result {
+            na_error!(
+                "{}.{} - {}: {error}",
+                descriptor::get_script_path(object),
+                property.name,
+                meta.get_key()
+            );
         }
     }
 }
