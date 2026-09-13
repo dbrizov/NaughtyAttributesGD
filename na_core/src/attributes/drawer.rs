@@ -1,6 +1,6 @@
 pub mod min_max_slider;
 
-use crate::attributes::ParseContext;
+use crate::attributes::parse_context::ParseContext;
 use min_max_slider::MinMaxSlider;
 
 pub enum DrawerAttribute {

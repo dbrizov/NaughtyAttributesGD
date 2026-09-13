@@ -1,7 +1,7 @@
 use godot::classes::Object;
 use godot::prelude::*;
 
-use crate::attributes::ParseContext;
+use crate::attributes::parse_context::ParseContext;
 use crate::expressions::number_expression::NumberExpression;
 
 pub const KEY: &str = "max_value";

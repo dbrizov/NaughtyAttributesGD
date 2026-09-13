@@ -1,7 +1,7 @@
 use godot::classes::Object;
 use godot::prelude::*;
 
-use crate::attributes::ParseContext;
+use crate::attributes::parse_context::ParseContext;
 use crate::expressions::bool_expression::BoolExpression;
 
 pub const KEY: &str = "show_if";

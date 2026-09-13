@@ -8,8 +8,9 @@ use crate::annotation::PropertyAnnotation;
 use crate::attributes::decorator::DecoratorAttribute;
 use crate::attributes::drawer::DrawerAttribute;
 use crate::attributes::meta::MetaAttribute;
+use crate::attributes::naughty_attribute::NaughtyAttribute;
+use crate::attributes::parse_context::ParseContext;
 use crate::attributes::validator::ValidatorAttribute;
-use crate::attributes::{self, NaughtyAttribute, ParseContext};
 
 impl PropertyDescriptor {
     fn plain(info: &PropertyInfo) -> Self {
@@ -121,7 +122,7 @@ impl ClassDescriptor {
             }
 
             let annotation =
-                PropertyAnnotation::parse(&property_info.hint_text, attributes::is_known_key);
+                PropertyAnnotation::parse(&property_info.hint_text, NaughtyAttribute::is_known_key);
 
             for key in &annotation.unknown_keys {
                 na_error!(

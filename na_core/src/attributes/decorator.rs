@@ -1,6 +1,6 @@
 pub mod message_box;
 
-use crate::attributes::ParseContext;
+use crate::attributes::parse_context::ParseContext;
 use message_box::{MessageBox, Severity};
 
 pub enum DecoratorAttribute {

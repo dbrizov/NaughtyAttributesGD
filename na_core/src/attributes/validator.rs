@@ -1,7 +1,7 @@
 pub mod max_value;
 pub mod min_value;
 
-use crate::attributes::ParseContext;
+use crate::attributes::parse_context::ParseContext;
 use max_value::MaxValue;
 use min_value::MinValue;
 

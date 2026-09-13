@@ -6,7 +6,7 @@ pub mod on_value_changed;
 pub mod read_only;
 pub mod show_if;
 
-use crate::attributes::ParseContext;
+use crate::attributes::parse_context::ParseContext;
 use disable_if::DisableIf;
 use enable_if::EnableIf;
 use hide_if::HideIf;

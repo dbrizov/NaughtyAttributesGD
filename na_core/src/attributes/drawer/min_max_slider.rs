@@ -1,7 +1,7 @@
 use godot::prelude::*;
 
 use crate::annotation::split_args;
-use crate::attributes::ParseContext;
+use crate::attributes::parse_context::ParseContext;
 use crate::expressions::number_expression::NumberExpression;
 
 pub const KEY: &str = "min_max_slider";

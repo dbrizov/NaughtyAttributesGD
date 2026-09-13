@@ -1,7 +1,7 @@
 use godot::classes::Object;
 use godot::prelude::*;
 
-use crate::attributes::ParseContext;
+use crate::attributes::parse_context::ParseContext;
 use crate::expressions::expression::Expression;
 
 const NUMBER_TYPES: &[VariantType] = &[
