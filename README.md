@@ -311,6 +311,7 @@ func print_value_change(old_value, new_value):
 ```
 
 ![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/on_value_changed.gif)
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/on_value_changed_output.gif)
 
 ### read_only
 
