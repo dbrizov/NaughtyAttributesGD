@@ -1,4 +1,4 @@
-use godot::classes::{EditorInterface, Texture2D};
+use godot::classes::{EditorInterface, StyleBox, Texture2D};
 use godot::prelude::*;
 
 pub fn get_icon(name: &str) -> Option<Gd<Texture2D>> {
@@ -17,4 +17,13 @@ pub fn get_color(name: &str) -> Option<Color> {
     }
 
     Some(theme.get_color(name, "Editor"))
+}
+
+pub fn get_stylebox(name: &str, theme_type: &str) -> Option<Gd<StyleBox>> {
+    let theme = EditorInterface::singleton().get_editor_theme()?;
+    if !theme.has_stylebox(name, theme_type) {
+        return None;
+    }
+
+    theme.get_stylebox(name, theme_type)
 }

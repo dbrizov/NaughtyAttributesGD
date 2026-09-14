@@ -1,3 +1,4 @@
+mod horizontal_line;
 mod message_box;
 
 use godot::classes::VBoxContainer;

@@ -15,6 +15,11 @@ const MARGIN_LEFT: f32 = 8.0;
 const MARGIN_RIGHT: f32 = 8.0;
 const MARGIN_TOP: f32 = 1.0;
 const MARGIN_BOTTOM: f32 = 1.0;
+const BORDER_WIDTH: i32 = 1;
+const CORNER_RADIUS: i32 = 6;
+const BG_COLOR_ALPHA: f32 = 0.12;
+const BORDER_COLOR_ALPHA: f32 = 0.45;
+const FALLBACK_COLOR: Color = Color::from_rgb(0.6, 0.6, 0.6);
 
 #[derive(Clone)]
 pub struct MessageBubble {
@@ -66,14 +71,19 @@ impl MessageBubble {
 }
 
 fn create_bubble_style(severity: Severity) -> Gd<StyleBoxFlat> {
-    let color = editor_style::get_color(get_color_name(severity))
-        .unwrap_or_else(|| Color::from_rgb(0.6, 0.6, 0.6));
+    let color = editor_style::get_color(get_color_name(severity)).unwrap_or(FALLBACK_COLOR);
 
     let mut style = StyleBoxFlat::new_gd();
-    style.set_bg_color(Color { a: 0.12, ..color });
-    style.set_border_color(Color { a: 0.45, ..color });
-    style.set_border_width_all(1);
-    style.set_corner_radius_all(6);
+    style.set_bg_color(Color {
+        a: BG_COLOR_ALPHA,
+        ..color
+    });
+    style.set_border_color(Color {
+        a: BORDER_COLOR_ALPHA,
+        ..color
+    });
+    style.set_border_width_all(BORDER_WIDTH);
+    style.set_corner_radius_all(CORNER_RADIUS);
     style.set_content_margin(Side::LEFT, MARGIN_LEFT);
     style.set_content_margin(Side::RIGHT, MARGIN_RIGHT);
     style.set_content_margin(Side::TOP, MARGIN_TOP);

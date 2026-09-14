@@ -14,10 +14,14 @@
 [ext_resource type="Script" uid="uid://fanxmy68t1mb" path="res://scripts/drawer_tests/min_max_slider.gd" id="6_mnmax"]
 [ext_resource type="Script" uid="uid://c86kjh1oe6af3" path="res://scripts/export_group_test.gd" id="7_grpts"]
 [ext_resource type="Script" uid="uid://7jlb5mp12u4h" path="res://scripts/validator_tests/require.gd" id="8_rqire"]
+[ext_resource type="Script" uid="uid://cqkcrnpuplacf" path="res://scripts/decorator_tests/horizontal_line.gd" id="9_hline"]
 
 [node name="root" type="Node3D" unique_id=1486502538]
 
 [node name="decorator_attributes" type="Node3D" parent="." unique_id=118726862]
+
+[node name="horizontal_line" type="Node3D" parent="decorator_attributes" unique_id=227631076]
+script = ExtResource("9_hline")
 
 [node name="message_box" type="Node3D" parent="decorator_attributes" unique_id=227631068]
 script = ExtResource("5_ifbox")

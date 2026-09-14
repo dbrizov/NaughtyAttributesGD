@@ -1,3 +1,4 @@
+pub mod horizontal_line;
 pub mod message_box;
 
 use crate::attributes::parse_context::ParseContext;
@@ -5,12 +6,14 @@ use crate::severity::Severity;
 use message_box::MessageBox;
 
 pub enum DecoratorAttribute {
+    HorizontalLine,
     MessageBox(MessageBox),
 }
 
 impl DecoratorAttribute {
     pub fn parse(key: &str, raw_args: &str, _context: &ParseContext) -> Result<Self, String> {
         match key {
+            horizontal_line::KEY => Ok(Self::HorizontalLine),
             message_box::KEY_INFO_BOX => {
                 MessageBox::parse(raw_args, Severity::Info).map(Self::MessageBox)
             }
@@ -27,12 +30,16 @@ impl DecoratorAttribute {
     pub fn is_known_key(key: &str) -> bool {
         matches!(
             key,
-            message_box::KEY_INFO_BOX | message_box::KEY_WARNING_BOX | message_box::KEY_ERROR_BOX
+            horizontal_line::KEY
+                | message_box::KEY_WARNING_BOX
+                | message_box::KEY_ERROR_BOX
+                | message_box::KEY_INFO_BOX
         )
     }
 
     pub fn get_key(&self) -> &'static str {
         match self {
+            Self::HorizontalLine => horizontal_line::KEY,
             Self::MessageBox(message_box) => message_box.get_key(),
         }
     }
