@@ -428,7 +428,7 @@ func is_even(number: int):
 
 ![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/require.gif)
 
-`require` replaces both of Unity's `Required` and `ValidateInput`. `require:icon` is a null check through Godot truthiness, `require:hp > 0` a bound, and `require:is_even(size)` a call with the argument written out.
+`require:icon` is a null check through Godot truthiness, `require:hp > 0` a bound, and `require:is_even(size)` a call with the argument written out.
 
 ## Diagnostics
 
@@ -439,7 +439,3 @@ res://scripts/player.gd.health - min_value: unknown identifier "floor_hp"
 ```
 
 A typo names the script, the property and the attribute rather than silently doing nothing.
-
-## License
-
-MIT — see [LICENSE](LICENSE). Third-party notices are in [NOTICES.md](NOTICES.md).
