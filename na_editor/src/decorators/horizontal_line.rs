@@ -17,14 +17,15 @@ const MARGIN_BOTTOM: f32 = 2.0;
 impl IDecorator for HorizontalLine {
     fn decorate(&self, container: &mut Gd<VBoxContainer>, _object: &Gd<Object>) {
         let mut separator = HSeparator::new_alloc();
-        separator.add_theme_stylebox_override("separator", &create_line_style());
+        let color = self.color.unwrap_or_else(get_category_color);
+        separator.add_theme_stylebox_override("separator", &create_line_style(color));
         container.add_child(&separator);
     }
 }
 
-fn create_line_style() -> Gd<StyleBoxFlat> {
+fn create_line_style(color: Color) -> Gd<StyleBoxFlat> {
     let mut style = StyleBoxFlat::new_gd();
-    style.set_bg_color(get_category_color());
+    style.set_bg_color(color);
     style.set_corner_radius_all(CORNER_RADIUS);
     style.set_content_margin(Side::TOP, MARGIN_TOP);
     style.set_content_margin(Side::BOTTOM, MARGIN_BOTTOM);

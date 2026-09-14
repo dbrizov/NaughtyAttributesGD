@@ -1,5 +1,4 @@
 use na_core::attributes::decorator::DecoratorAttribute;
-use na_core::attributes::decorator::horizontal_line::HorizontalLine;
 use na_core::attributes::drawer::DrawerAttribute;
 use na_core::attributes::validator::ValidatorAttribute;
 
@@ -9,7 +8,7 @@ use crate::validators::IValidator;
 
 pub fn get_decorator(attribute: &DecoratorAttribute) -> &dyn IDecorator {
     match attribute {
-        DecoratorAttribute::HorizontalLine => &HorizontalLine,
+        DecoratorAttribute::HorizontalLine(horizontal_line) => horizontal_line,
         DecoratorAttribute::MessageBox(message_box) => message_box,
     }
 }
