@@ -2,7 +2,7 @@ use godot::prelude::*;
 
 pub const KEY: &str = "horizontal_line";
 
-const COLOR_ERROR: &str = "expected a colour like #5a5a5a or #5a5a5a80";
+const COLOR_ERROR: &str = "expected a color like #5a5a5a or #5a5a5a80";
 
 pub struct HorizontalLine {
     pub color: Option<Color>,
@@ -49,7 +49,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn leaves_the_colour_to_the_theme_without_args() {
+    fn leaves_the_color_to_the_theme_without_args() {
         assert!(HorizontalLine::parse("").unwrap().color.is_none());
         assert!(HorizontalLine::parse("   ").unwrap().color.is_none());
     }
@@ -67,7 +67,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_a_malformed_colour() {
+    fn rejects_a_malformed_color() {
         assert!(HorizontalLine::parse("#5a5a5").is_err());
         assert!(HorizontalLine::parse("#gggggg").is_err());
         assert!(HorizontalLine::parse("dim_gray").is_err());
