@@ -1,3 +1,4 @@
+pub mod dropdown;
 pub mod min_max_slider;
 
 use godot::classes::EditorProperty;

@@ -11,6 +11,7 @@ mod property_utils;
 mod validators;
 mod variant_utils;
 
+pub use drawers::dropdown::NaughtyDropdown;
 pub use drawers::min_max_slider::NaughtyMinMaxSlider;
 pub use editor_inspector_plugin::NaughtyEditorInspectorPlugin;
 pub use editor_plugin::NaughtyEditorPlugin;

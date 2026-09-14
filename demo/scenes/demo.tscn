@@ -15,6 +15,7 @@
 [ext_resource type="Script" uid="uid://c86kjh1oe6af3" path="res://scripts/export_group_test.gd" id="7_grpts"]
 [ext_resource type="Script" uid="uid://7jlb5mp12u4h" path="res://scripts/validator_tests/require.gd" id="8_rqire"]
 [ext_resource type="Script" uid="uid://cqkcrnpuplacf" path="res://scripts/decorator_tests/horizontal_line.gd" id="9_hline"]
+[ext_resource type="Script" uid="uid://dkmikr6xordg1" path="res://scripts/drawer_tests/dropdown.gd" id="10_drpdn"]
 
 [node name="root" type="Node3D" unique_id=1486502538]
 
@@ -27,6 +28,9 @@ script = ExtResource("9_hline")
 script = ExtResource("5_ifbox")
 
 [node name="drawer_attributes" type="Node3D" parent="." unique_id=118726861]
+
+[node name="dropdown" type="Node3D" parent="drawer_attributes" unique_id=227631077]
+script = ExtResource("10_drpdn")
 
 [node name="min_max_slider" type="Node3D" parent="drawer_attributes" unique_id=227631069]
 script = ExtResource("6_mnmax")
