@@ -118,6 +118,11 @@ jobs:
           cp README.md LICENSE NOTICES.md "payload/$ADDON_DIR/"
           cp bin/* "payload/$ADDON_DIR/bin/"
 
+          mkdir -p "payload/$ADDON_DIR/demo"
+          cp -r demo/scenes demo/scripts "payload/$ADDON_DIR/demo/"
+          sed -i "s|res://scripts/|res://$ADDON_DIR/demo/scripts/|g" \
+            "payload/$ADDON_DIR/demo/scenes/demo.tscn"
+
       - name: Verify payload
         run: |
           for f in bin/naughtyattributes.windows.x86_64.dll \
@@ -127,9 +132,18 @@ jobs:
                    naughtyattributes.gdextension.uid \
                    README.md \
                    LICENSE \
-                   NOTICES.md; do
+                   NOTICES.md \
+                   demo/scenes/demo.tscn; do
             test -s "payload/$ADDON_DIR/$f" || { echo "missing $f"; exit 1; }
           done
+
+          scene="payload/$ADDON_DIR/demo/scenes/demo.tscn"
+          missing=0
+          for rel in $(grep -oE 'path="res://[^"]*"' "$scene" | sed -E 's|path="res://(.*)"|\1|'); do
+            test -s "payload/$rel" || { echo "demo.tscn references missing $rel"; missing=1; }
+          done
+          test "$missing" -eq 0 || exit 1
+
           find payload -type f | sort
 
       - uses: actions/upload-artifact@v7
