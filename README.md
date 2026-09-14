@@ -2,7 +2,7 @@
 [![Godot 4.6+](https://img.shields.io/badge/godot-4.6%2B-blue.svg)](https://godotengine.org/download)
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://github.com/dbrizov/NaughtyAttributesGD/blob/master/LICENSE)
 
-NaughtyAttributesGD is an extension for the Godot Inspector.
+NaughtyAttributes is an attributes extension for the Godot Inspector.
 
 It expands the range of things you can say about an exported property, so that you can build powerful inspectors without writing an `EditorInspectorPlugin` or an `EditorProperty` of your own. Conditional visibility, value clamping, validation messages, help boxes and custom widgets are all written inline, next to the property they describe.
 
