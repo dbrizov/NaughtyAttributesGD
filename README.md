@@ -114,6 +114,8 @@ var green: int = 0
 var blue: int = 0
 ```
 
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/horizontal_line.png)
+
 ### info_box / warning_box / error_box
 
 Used for providing additional information. Three keys over one message box; the key chooses the icon and colour.
@@ -130,6 +132,8 @@ var warning: int = 0
 @export_custom(PROPERTY_HINT_NONE, "error_box:This value breaks the build")
 var error: int = 0
 ```
+
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/message_box.png)
 
 The message takes the rest of the entry whole, so prose commas need no escaping.
 
@@ -172,6 +176,8 @@ func get_directions():
 	}
 ```
 
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/dropdown.gif)
+
 An `Array` uses each element as both label and value; a `Dictionary` uses the key as the label and the value as the value. A stored value that matches no option is shown as `{value} (not an option)` until you pick a real one — the widget never writes on your behalf.
 
 ### enum_flags
@@ -191,6 +197,8 @@ var naughty_damage_type: int = DamageType.FIRE | DamageType.ICE
 @export_flags("FIRE:1", "ICE:2", "WIND:4")
 var builtin_damage_type: int = DamageType.FIRE | DamageType.ICE
 ```
+
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/enum_flags.png)
 
 ### min_max_slider
 
@@ -218,6 +226,8 @@ var level: Vector2i = Vector2i(20, 40)
 func get_max_stamina(bonus_stamina: int):
 	return self.max_stamina + bonus_stamina
 ```
+
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/min_max_slider.gif)
 
 ## Meta Attributes
 
@@ -253,6 +263,8 @@ func is_at_max_health():
 	return self.health >= self.max_health
 ```
 
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/enable_disable_if.gif)
+
 Conditions are full expressions, so `&&`, `||`, `!`, parentheses, comparisons and enum comparisons all work, and several conditions on one property are ANDed.
 
 ### label
@@ -271,6 +283,8 @@ var hp: int = 100
 @export_custom(PROPERTY_HINT_NONE, "label:Damage")
 var dmg: int = 15
 ```
+
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/label.png)
 
 ### on_value_changed
 
@@ -296,6 +310,8 @@ func print_value_change(old_value, new_value):
 	print(old_value, " -> ", new_value)
 ```
 
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/on_value_changed.gif)
+
 ### read_only
 
 Make a property read only.
@@ -309,6 +325,8 @@ var read_only: int = 0
 @export
 var not_read_only: int = 0
 ```
+
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/read_only.png)
 
 ### show_if / hide_if
 
@@ -339,6 +357,8 @@ var at_max_health: String = ""
 func is_at_max_health():
 	return self.health >= self.max_health
 ```
+
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/show_hide_if.gif)
 
 ## Validator Attributes
 
@@ -379,6 +399,8 @@ func get_max_ratio() -> float:
 	return self.max_ratio
 ```
 
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/min_max_value.gif)
+
 ### require
 
 The most powerful validator. It takes a boolean expression and draws a message beside the property when the expression is false. It corrects nothing and writes nothing, so it never enters the undo history.
@@ -403,6 +425,8 @@ var even_number: int = 3
 func is_even(number: int):
 	return number % 2 == 0
 ```
+
+![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/require.gif)
 
 `require` replaces both of Unity's `Required` and `ValidateInput`. `require:icon` is a null check through Godot truthiness, `require:hp > 0` a bound, and `require:is_even(size)` a call with the argument written out.
 
