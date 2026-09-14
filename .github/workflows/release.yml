@@ -115,16 +115,20 @@ jobs:
           mkdir -p "payload/$ADDON_DIR/bin"
           cp packaging/naughtyattributes.gdextension "payload/$ADDON_DIR/"
           cp demo/addons/naughtyattributes/naughtyattributes.gdextension.uid "payload/$ADDON_DIR/"
-          cp packaging/README.md "payload/$ADDON_DIR/"
-          cp LICENSE "payload/$ADDON_DIR/"
+          cp README.md LICENSE NOTICES.md "payload/$ADDON_DIR/"
           cp bin/* "payload/$ADDON_DIR/bin/"
 
       - name: Verify payload
         run: |
-          for f in naughtyattributes.windows.x86_64.dll \
-                   naughtyattributes.linux.x86_64.so \
-                   naughtyattributes.macos.dylib; do
-            test -s "payload/$ADDON_DIR/bin/$f" || { echo "missing $f"; exit 1; }
+          for f in bin/naughtyattributes.windows.x86_64.dll \
+                   bin/naughtyattributes.linux.x86_64.so \
+                   bin/naughtyattributes.macos.dylib \
+                   naughtyattributes.gdextension \
+                   naughtyattributes.gdextension.uid \
+                   README.md \
+                   LICENSE \
+                   NOTICES.md; do
+            test -s "payload/$ADDON_DIR/$f" || { echo "missing $f"; exit 1; }
           done
           find payload -type f | sort
 

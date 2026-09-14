@@ -1,2 +1,0 @@
-# NaughtyAttributesGD
-NaughtyAttributes for Godot
