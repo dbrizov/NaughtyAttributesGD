@@ -1,4 +1,5 @@
 pub mod dropdown;
+pub mod enum_flags;
 pub mod min_max_slider;
 
 use godot::classes::EditorProperty;

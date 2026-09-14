@@ -1,6 +1,7 @@
 use godot::classes::Object;
 use godot::prelude::*;
 
+use crate::annotation::is_identifier;
 use crate::expressions::expression::get_call_hint;
 
 pub const KEY: &str = "on_value_changed";
@@ -47,15 +48,6 @@ impl OnValueChanged {
                 format!("{error} (expected a callback with two arguments: old_value, new_value)")
             })
     }
-}
-
-fn is_identifier(name: &str) -> bool {
-    let mut characters = name.chars();
-
-    characters
-        .next()
-        .is_some_and(|first| first.is_ascii_alphabetic() || first == '_')
-        && characters.all(|character| character.is_ascii_alphanumeric() || character == '_')
 }
 
 #[cfg(test)]

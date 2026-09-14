@@ -16,6 +16,7 @@ pub fn get_decorator(attribute: &DecoratorAttribute) -> &dyn IDecorator {
 pub fn get_drawer(attribute: &DrawerAttribute) -> &dyn IDrawer {
     match attribute {
         DrawerAttribute::Dropdown(dropdown) => dropdown,
+        DrawerAttribute::EnumFlags(enum_flags) => enum_flags,
         DrawerAttribute::MinMaxSlider(min_max_slider) => min_max_slider,
     }
 }

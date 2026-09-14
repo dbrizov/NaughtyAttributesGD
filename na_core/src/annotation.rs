@@ -42,6 +42,17 @@ pub fn builtin_hint_from_key(key: &str) -> Option<PropertyHint> {
         .map(|(_, hint)| *hint)
 }
 
+/// Whether the text is one ASCII name — not a call, a dotted path or a phrase.
+pub fn is_identifier(text: &str) -> bool {
+    let mut characters = text.chars();
+    let Some(first) = characters.next() else {
+        return false;
+    };
+
+    (first.is_ascii_alphabetic() || first == '_')
+        && characters.all(|character| character.is_ascii_alphanumeric() || character == '_')
+}
+
 /// One `key:raw_args` entry of a hint text, before the attribute splits its arguments.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AttributeEntry {
