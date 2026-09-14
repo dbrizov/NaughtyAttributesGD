@@ -1,0 +1,17 @@
+[configuration]
+
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = 4.6
+reloadable = true
+
+[libraries]
+
+windows.editor.x86_64           = "res://addons/naughtyattributes/bin/naughtyattributes.windows.x86_64.dll"
+windows.template_debug.x86_64   = "res://addons/naughtyattributes/bin/naughtyattributes.windows.x86_64.dll"
+windows.template_release.x86_64 = "res://addons/naughtyattributes/bin/naughtyattributes.windows.x86_64.dll"
+linux.editor.x86_64             = "res://addons/naughtyattributes/bin/naughtyattributes.linux.x86_64.so"
+linux.template_debug.x86_64     = "res://addons/naughtyattributes/bin/naughtyattributes.linux.x86_64.so"
+linux.template_release.x86_64   = "res://addons/naughtyattributes/bin/naughtyattributes.linux.x86_64.so"
+macos.editor                    = "res://addons/naughtyattributes/bin/naughtyattributes.macos.dylib"
+macos.template_debug            = "res://addons/naughtyattributes/bin/naughtyattributes.macos.dylib"
+macos.template_release          = "res://addons/naughtyattributes/bin/naughtyattributes.macos.dylib"

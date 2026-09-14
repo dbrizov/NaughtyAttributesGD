@@ -9,7 +9,7 @@ license = "MIT"
 repository = "https://github.com/dbrizov/NaughtyAttributesGD"
 
 [workspace.dependencies]
-godot = "0.5.5"
+godot = { version = "0.5.5", features = ["api-4-6"] }
 na_core = { path = "na_core" }
 na_editor = { path = "na_editor" }
 na_logging = { path = "na_logging" }
