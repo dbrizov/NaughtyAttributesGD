@@ -1,20 +1,25 @@
-@tool
+@tool # required for method calls in attributes
 extends Node3D
 
-enum WeaponKind { MELEE, RANGED, MAGIC }
+enum WeaponType { MELEE, RANGED, MAGIC }
 
-@export var is_immortal: bool = false
+@export
+var is_immortal: bool = false
 
-@export var weapon_kind: WeaponKind = WeaponKind.MELEE
+@export
+var weapon_type: WeaponType = WeaponType.MELEE
 
-@export_custom(PROPERTY_HINT_NONE, "enable_if:weapon_kind == WeaponKind.MELEE")
+@export_custom(PROPERTY_HINT_NONE, "enable_if:weapon_type == WeaponType.MELEE")
 var melee_class: String = "class_name"
 
-@export_custom(PROPERTY_HINT_NONE, "enable_if:!is_immortal") var max_health: int = 100
+@export_custom(PROPERTY_HINT_NONE, "enable_if:!is_immortal")
+var max_health: int = 100
 
-@export_custom(PROPERTY_HINT_NONE, "enable_if:!is_immortal") var health: int = 100
+@export_custom(PROPERTY_HINT_NONE, "enable_if:!is_immortal")
+var health: int = 100
 
-@export_custom(PROPERTY_HINT_NONE, "enable_if:is_at_max_health()") var at_max_health: String = ""
+@export_custom(PROPERTY_HINT_NONE, "enable_if:is_at_max_health()")
+var at_max_health: String = ""
 
 
 func is_at_max_health():

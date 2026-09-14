@@ -167,12 +167,12 @@ mod tests {
         assert_eq!(normalize_operators("a&&b"), "a and b");
         assert_eq!(normalize_operators("a||b"), "a or b");
         assert_eq!(
-            normalize_operators("(level>5&&is_weapon)||kind==Weapon.MAGIC"),
-            "(level>5 and is_weapon) or kind==Weapon.MAGIC"
+            normalize_operators("(level>5&&is_weapon)||weapon_type==WeaponType.MAGIC"),
+            "(level>5 and is_weapon) or weapon_type==WeaponType.MAGIC"
         );
         assert_eq!(
-            normalize_operators("(level > 5&&is_weapon)||kind == Weapon.MAGIC"),
-            "(level > 5 and is_weapon) or kind == Weapon.MAGIC"
+            normalize_operators("(level > 5&&is_weapon)||weapon_type == WeaponType.MAGIC"),
+            "(level > 5 and is_weapon) or weapon_type == WeaponType.MAGIC"
         );
     }
 

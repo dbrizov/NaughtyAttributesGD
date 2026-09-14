@@ -1,7 +1,8 @@
-@tool
+@tool # required for method calls in attributes
 extends Node3D
 
-@export var min_size: int = 4
+@export
+var min_size: int = 4
 
 @export_custom(PROPERTY_HINT_NONE, "require:size >= min_size")
 var size: int = 2

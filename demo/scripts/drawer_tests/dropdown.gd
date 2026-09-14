@@ -1,4 +1,4 @@
-@tool
+@tool # required for method calls in attributes
 extends Node3D
 
 const LEFT: Vector2 = Vector2(-1.0, 0.0)

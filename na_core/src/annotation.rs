@@ -193,8 +193,12 @@ mod tests {
 
     #[test]
     fn splits_key_on_first_colon_only() {
-        let annotation = PropertyAnnotation::parse("show_if:kind == Weapon.MELEE", known);
-        assert_eq!(annotation.attributes[0].raw_args, "kind == Weapon.MELEE");
+        let annotation =
+            PropertyAnnotation::parse("show_if:weapon_type == WeaponType.MELEE", known);
+        assert_eq!(
+            annotation.attributes[0].raw_args,
+            "weapon_type == WeaponType.MELEE"
+        );
 
         let annotation = PropertyAnnotation::parse("show_if:a ? b : c", known);
         assert_eq!(annotation.attributes[0].raw_args, "a ? b : c");
@@ -323,7 +327,7 @@ mod tests {
     #[test]
     fn tolerates_whitespace_around_delimiters() {
         let annotation = PropertyAnnotation::parse(
-            "show_if : (level>5&&is_weapon)||kind==Weapon.MAGIC ;    range  : 0 ,   10,   0.1",
+            "show_if : (level>5&&is_weapon)||weapon_type==WeaponType.MAGIC ;    range  : 0 ,   10,   0.1",
             known,
         );
 
@@ -331,7 +335,7 @@ mod tests {
         assert_eq!(annotation.attributes[0].key, "show_if");
         assert_eq!(
             annotation.attributes[0].raw_args,
-            "(level>5&&is_weapon)||kind==Weapon.MAGIC"
+            "(level>5&&is_weapon)||weapon_type==WeaponType.MAGIC"
         );
         assert_eq!(
             annotation.builtin,

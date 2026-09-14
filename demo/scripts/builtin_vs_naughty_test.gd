@@ -1,4 +1,4 @@
-@tool
+@tool # required for method calls in attributes
 extends Node
 
 @export_group("Built-in")

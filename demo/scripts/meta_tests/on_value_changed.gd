@@ -1,11 +1,14 @@
-@tool
+@tool # required for method calls in attributes
 extends Node3D
 
-@export_custom(PROPERTY_HINT_NONE, "on_value_changed:print_value_change") var strength: int = 10
+@export_custom(PROPERTY_HINT_NONE, "on_value_changed:print_value_change")
+var strength: int = 10
 
-@export_custom(PROPERTY_HINT_NONE, "on_value_changed:print_value_change") var dexterity: int = 7
+@export_custom(PROPERTY_HINT_NONE, "on_value_changed:print_value_change")
+var dexterity: int = 7
 
-@export_custom(PROPERTY_HINT_NONE, "read_only") var power: int:
+@export_custom(PROPERTY_HINT_NONE, "read_only")
+var power: int:
 	get:
 		return strength * 2 + dexterity
 
