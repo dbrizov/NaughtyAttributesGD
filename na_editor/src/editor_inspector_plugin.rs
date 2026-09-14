@@ -191,6 +191,10 @@ impl IEditorInspectorPlugin for NaughtyEditorInspectorPlugin {
             self.base_mut().add_custom_control(container);
         }
 
+        if let Some(bubble) = &property_block.message_bubble {
+            self.base_mut().add_custom_control(bubble.get_panel());
+        }
+
         self.base_mut()
             .add_property_editor(&GString::from(&name), &property_block.editor);
 
@@ -362,6 +366,12 @@ impl NaughtyEditorInspectorPlugin {
 
                 let enabled = property_utils::is_enabled(object, property);
                 property_block.set_enabled(enabled);
+
+                let message = visible
+                    .then(|| property_utils::get_validation_message(object, property))
+                    .flatten();
+
+                property_block.set_message(message.as_deref());
             }
         }
     }

@@ -26,4 +26,8 @@ impl BoolExpression {
     pub fn evaluate(&self, object: &Gd<Object>) -> Result<bool, String> {
         self.expression.evaluate_bool(object)
     }
+
+    pub fn get_text(&self) -> &str {
+        self.expression.get_text()
+    }
 }

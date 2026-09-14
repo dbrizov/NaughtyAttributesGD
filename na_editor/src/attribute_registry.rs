@@ -22,5 +22,6 @@ pub fn get_validator(attribute: &ValidatorAttribute) -> &dyn IValidator {
     match attribute {
         ValidatorAttribute::MinValue(min_value) => min_value,
         ValidatorAttribute::MaxValue(max_value) => max_value,
+        ValidatorAttribute::Require(require) => require,
     }
 }

@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://c3j8pl8ublw6e" path="res://scripts/decorator_tests/message_box.gd" id="5_ifbox"]
 [ext_resource type="Script" uid="uid://fanxmy68t1mb" path="res://scripts/drawer_tests/min_max_slider.gd" id="6_mnmax"]
 [ext_resource type="Script" uid="uid://c86kjh1oe6af3" path="res://scripts/export_group_test.gd" id="7_grpts"]
+[ext_resource type="Script" uid="uid://7jlb5mp12u4h" path="res://scripts/validator_tests/require.gd" id="8_rqire"]
 
 [node name="root" type="Node3D" unique_id=1486502538]
 
@@ -54,6 +55,9 @@ power = 27
 
 [node name="min_max_value" type="Node3D" parent="validator_attributes" unique_id=1917403352]
 script = ExtResource("3_mnval")
+
+[node name="require" type="Node3D" parent="validator_attributes" unique_id=1917403353]
+script = ExtResource("8_rqire")
 
 [node name="builtin" type="Node3D" parent="." unique_id=1187945891]
 script = ExtResource("4_vephn")

@@ -1,15 +1,9 @@
 use crate::annotation::unescape;
+use crate::severity::Severity;
 
 pub const KEY_INFO_BOX: &str = "info_box";
 pub const KEY_WARNING_BOX: &str = "warning_box";
 pub const KEY_ERROR_BOX: &str = "error_box";
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Severity {
-    Info,
-    Warning,
-    Error,
-}
 
 pub struct MessageBox {
     pub text: String,

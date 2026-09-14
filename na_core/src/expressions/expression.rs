@@ -5,7 +5,7 @@ use godot::prelude::*;
 /// A compiled Godot `Expression`.
 #[derive(Clone)]
 pub struct Expression {
-    expression_text: String,
+    text: String,
     expression: Gd<GodotExpression>,
     inputs: VarArray,
     valid: bool,
@@ -37,7 +37,7 @@ impl Expression {
         };
 
         Self {
-            expression_text: expression_text.to_string(),
+            text: expression_text.to_string(),
             expression,
             inputs,
             valid,
@@ -47,6 +47,10 @@ impl Expression {
 
     pub fn is_valid(&self) -> bool {
         self.valid
+    }
+
+    pub fn get_text(&self) -> &str {
+        &self.text
     }
 
     pub fn get_error(&self) -> &str {
@@ -67,7 +71,7 @@ impl Expression {
             .done();
 
         if expression.has_execute_failed() {
-            let hint = if self.expression_text.contains('(') {
+            let hint = if self.text.contains('(') {
                 get_call_hint(object)
             } else {
                 ""
@@ -75,7 +79,7 @@ impl Expression {
 
             return Err(format!(
                 "'{}' failed: {}{hint}",
-                self.expression_text,
+                self.text,
                 expression.get_error_text()
             ));
         }
@@ -95,7 +99,7 @@ impl Expression {
             VariantType::FLOAT => Ok(value.to::<f64>()),
             other => Err(format!(
                 "'{}' is {}, not a number",
-                self.expression_text,
+                self.text,
                 type_string(other.ord() as i64)
             )),
         }

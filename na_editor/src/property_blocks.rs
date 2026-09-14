@@ -3,9 +3,11 @@ use godot::obj::Inherits;
 use godot::prelude::*;
 
 use na_core::descriptor::{self, PropertyDescriptor};
+use na_core::severity::Severity;
 use na_logging::na_error;
 
 use crate::attribute_registry;
+use crate::message_bubble::MessageBubble;
 use crate::property_undo_redo::PropertyEditAction;
 use crate::property_utils;
 
@@ -13,6 +15,7 @@ use crate::property_utils;
 pub struct PropertyBlock {
     pub editor: Gd<EditorProperty>,
     pub decorations_container: Option<Gd<VBoxContainer>>,
+    pub message_bubble: Option<MessageBubble>,
 }
 
 impl PropertyBlock {
@@ -20,6 +23,20 @@ impl PropertyBlock {
         if self.editor.is_instance_valid() {
             self.editor.set_label(label);
             self.editor.queue_redraw();
+        }
+    }
+
+    pub fn set_message(&mut self, message: Option<&str>) {
+        let Some(bubble) = &mut self.message_bubble else {
+            return;
+        };
+
+        match message {
+            Some(text) => {
+                bubble.set_text(text);
+                bubble.set_visible(true);
+            }
+            None => bubble.set_visible(false),
         }
     }
 
@@ -76,6 +93,7 @@ pub fn create_property_block(
     let mut property_block = PropertyBlock {
         editor,
         decorations_container: create_decorations_container(object, property),
+        message_bubble: create_message_bubble(property),
     };
 
     property_block.set_visible(visible);
@@ -97,6 +115,17 @@ fn create_decorations_container(
     }
 
     Some(container)
+}
+
+fn create_message_bubble(property: &PropertyDescriptor) -> Option<MessageBubble> {
+    if property.validators.is_empty() {
+        return None;
+    }
+
+    let mut bubble = MessageBubble::new(Severity::Error);
+    bubble.set_visible(false);
+
+    Some(bubble)
 }
 
 fn create_default_editor(

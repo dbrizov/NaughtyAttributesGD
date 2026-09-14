@@ -9,6 +9,7 @@ use na_logging::na_error;
 
 use crate::attribute_registry;
 use crate::property_undo_redo::PropertyEditAction;
+use crate::validators::Validation;
 use crate::variant_utils;
 
 /// Returns `None` when the property has no drawer, or when its drawer failed.
@@ -89,12 +90,14 @@ pub fn clamp_property(
     property: &PropertyDescriptor,
     min: f64,
     max: f64,
-) -> Result<Option<Variant>, String> {
+) -> Result<Validation, String> {
     let value = object.get(&property.name);
     let clamped_value = variant_utils::clamp(&value, min, max)?;
-    let is_clamped = clamped_value != value;
+    if clamped_value == value {
+        return Ok(Validation::Valid);
+    }
 
-    Ok(is_clamped.then_some(clamped_value))
+    Ok(Validation::Corrected(clamped_value))
 }
 
 pub fn validate_property(
@@ -105,8 +108,10 @@ pub fn validate_property(
     for attribute in &property.validators {
         let validator = attribute_registry::get_validator(attribute);
         match validator.validate(object, property) {
-            Ok(Some(value)) => edit_action.set_property_value(&property.name, &value),
-            Ok(None) => {}
+            Ok(Validation::Corrected(value)) => {
+                edit_action.set_property_value(&property.name, &value)
+            }
+            Ok(Validation::Valid | Validation::Rejected(_)) => {}
             Err(error) => {
                 na_error!(
                     "{}.{} - {}: {error}",
@@ -129,6 +134,25 @@ pub fn validate_properties(
             validate_property(edit_action, object, property);
         }
     }
+}
+
+pub fn get_validation_message(
+    object: &Gd<Object>,
+    property: &PropertyDescriptor,
+) -> Option<String> {
+    let messages: Vec<String> = property
+        .validators
+        .iter()
+        .filter_map(|attribute| {
+            let validator = attribute_registry::get_validator(attribute);
+            match validator.validate(object, property) {
+                Ok(Validation::Rejected(message)) => Some(message),
+                Ok(Validation::Valid | Validation::Corrected(_)) | Err(_) => None,
+            }
+        })
+        .collect();
+
+    (!messages.is_empty()).then(|| messages.join("\n"))
 }
 
 pub fn call_value_changed_callbacks(

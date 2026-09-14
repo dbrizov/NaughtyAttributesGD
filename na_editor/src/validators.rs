@@ -1,15 +1,21 @@
 mod max_value;
 mod min_value;
+mod require;
 
 use godot::prelude::*;
 
 use na_core::descriptor::PropertyDescriptor;
 
+pub enum Validation {
+    Valid,
+    Corrected(Variant),
+    Rejected(String),
+}
+
 pub trait IValidator {
-    /// Returns the corrected value, `None` if the value is already valid.
     fn validate(
         &self,
         object: &Gd<Object>,
         property: &PropertyDescriptor,
-    ) -> Result<Option<Variant>, String>;
+    ) -> Result<Validation, String>;
 }

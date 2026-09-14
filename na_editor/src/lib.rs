@@ -4,6 +4,7 @@ mod drawers;
 mod editor_inspector_plugin;
 mod editor_plugin;
 mod editor_style;
+mod message_bubble;
 mod property_blocks;
 mod property_undo_redo;
 mod property_utils;
