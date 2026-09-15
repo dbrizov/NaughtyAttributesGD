@@ -5,3 +5,7 @@ target
 
 # Godot
 .godot/
+
+# Sphinx
+.buildinfo
+/docs/_sources/
