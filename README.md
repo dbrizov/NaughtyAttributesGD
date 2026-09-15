@@ -23,7 +23,7 @@ Restart the editor afterwards.
 
 ## How attributes are written
 
-GDScript has no user-definable annotations, so attributes are written as strings in the hint text of `@export_custom`, separated by `;`
+GDScript has no user-definable annotations, so attributes are written as strings in the hint text of `@export_custom`, separated by `;`:
 
 ```gdscript
 @export_custom(PROPERTY_HINT_NONE, "min_value:0; max_value:100")
