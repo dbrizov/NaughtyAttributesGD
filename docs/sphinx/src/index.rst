@@ -45,3 +45,10 @@ I am developing the project in my free time. If you like it you can support me b
     attributes/drawer_attributes/index
     attributes/meta_attributes/index
     attributes/validator_attributes/index
+
+.. toctree::
+    :maxdepth: 1
+    :caption: About
+    :name: sec-about
+
+    credits
