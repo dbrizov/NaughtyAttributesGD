@@ -1,5 +1,5 @@
-NaughtyAttributes' Docs
-=======================
+Introduction
+============
 NaughtyAttributes is an attributes extension for the Godot Inspector.
 
 It expands the range of things you can say about an exported property, so that you can build powerful inspectors

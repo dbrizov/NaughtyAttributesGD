@@ -1,13 +1,3 @@
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
 import sphinx_rtd_theme
 from datetime import datetime
 from pygments.lexers.gdscript import GDScriptLexer
@@ -28,19 +18,14 @@ def get_copyright_years(first_year):
 project = "NaughtyAttributesGD"
 copyright = f"{get_copyright_years(2026)} Denis Rizov"
 author = "Denis Rizov"
-
-# The full version, including alpha/beta/rc tags
 release = "0.1.0"
 
 # -- General configuration ---------------------------------------------------
 
-
-# Extensions
 extensions = [
     "sphinx_rtd_theme"
 ]
 
-# Code block
 highlight_language = "gdscript"
 
 
@@ -53,20 +38,20 @@ class AnnotatedGDScriptLexer(GDScriptLexer):
 
 lexers["gdscript"] = AnnotatedGDScriptLexer()
 
-# Add any paths that contain templates here, relative to this directory.
-# templates_path = ['_templates']
-
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
+templates_path = ["templates"]
 exclude_patterns = []
 
-# Don't copy the .rst sources into the output. This drops the _sources\
-# folder and the "View page source" link that points at it.
+# -- HTML output -------------------------------------------------------------
+
+# Without this the browser title is built from project and release.
+html_title = "NaughtyAttributes for Godot"
+
+# Drops the _sources\ folder and the "View page source" link that points at it.
 html_copy_source = False
 
 # Replace that link with one that points at the page's source on GitHub.
 html_context = {
+    "site_title": "NaughtyAttributes’ Docs for Godot",
     "display_github": True,
     "github_user": "dbrizov",
     "github_repo": "NaughtyAttributesGD",
@@ -74,15 +59,10 @@ html_context = {
     "conf_py_path": "/docs/sphinx/src/",  # path to the .rst files, from the repo root
 }
 
-# Theme
 html_theme = "sphinx_rtd_theme"
 html_theme_options = {
-    "collapse_navigation": False,  # Collapse navigation (False makes it tree-like)
+    "collapse_navigation": False,  # False makes the navigation tree-like
 }
 
-# Custom static files, relative to this directory. They are copied after the
-# builtin static files, so a file named "default.css" would overwrite Sphinx's.
 html_static_path = ["static"]
-
-# Loaded after the theme's own stylesheet, which is what lets it override it.
 html_css_files = ["css/custom.css"]
