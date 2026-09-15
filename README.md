@@ -10,7 +10,7 @@ It is a port of [NaughtyAttributes for Unity](https://github.com/dbrizov/Naughty
 
 ## System Requirements
 
-Godot **4.6** or later. The addon ships prebuilt binaries for Windows x86_64, Linux x86_64 and macOS (universal) — no compilation and no Rust toolchain needed.
+Godot **4.6** or later. The addon ships prebuilt binaries for Windows x86_64, Linux x86_64 and macOS (universal) - no compilation and no Rust toolchain needed.
 
 ## Installation
 
@@ -23,7 +23,7 @@ Restart the editor afterwards.
 
 ## How attributes are written
 
-GDScript has no user-definable annotations, so attributes are written as strings in the hint text of `@export_custom`, separated by `;`:
+GDScript has no user-definable annotations, so attributes are written as strings in the hint text of `@export_custom`, separated by `;`
 
 ```gdscript
 @export_custom(PROPERTY_HINT_NONE, "min_value:0; max_value:100")
@@ -41,7 +41,7 @@ Everything after the first `:` belongs to the attribute, so a condition can cont
 
 ### Escaping
 
-`;` separates attributes and `,` separates arguments. Escape them as `\;` and `\\,` — the double backslash is GDScript's, which rejects `\,` inside a string literal. Attributes that take their text whole (`info_box`, `warning_box`, `error_box`, `label`) need no comma escaping at all.
+`;` separates attributes and `,` separates arguments. Escape them as `\;` and `\\,` - the double backslash is GDScript's, which rejects `\,` inside a string literal. Attributes that take their text whole (`info_box`, `warning_box`, `error_box`, `label`) need no comma escaping at all.
 
 ### `@tool`
 
@@ -96,7 +96,7 @@ Draw something extra above a property. A property can have any number of decorat
 
 ### horizontal_line
 
-Draws a separator above the property. Takes an optional hex colour, with or without alpha; the default follows the editor theme.
+Draws a separator above the property. Takes an optional hex color, with or without alpha; the default follows the editor theme.
 
 ```gdscript
 extends Node3D
@@ -118,7 +118,7 @@ var blue: int = 0
 
 ### info_box / warning_box / error_box
 
-Used for providing additional information. Three keys over one message box; the key chooses the icon and colour.
+Used for providing additional information.
 
 ```gdscript
 extends Node3D
@@ -139,11 +139,11 @@ The message takes the rest of the entry whole, so prose commas need no escaping.
 
 ## Drawer Attributes
 
-Replace the property's widget. A property can have only one drawer — if it has more, the last one wins and the others are reported as errors.
+Replace the property's widget. A property can have only one drawer - if it has more, the last one wins and the others are reported as errors.
 
 ### dropdown
 
-Provides an interface for dropdown value selection. The option list is an expression, so it can name a property, a dictionary literal, or a method call — and it re-evaluates, so a list that reads another property follows it.
+Provides an interface for dropdown value selection. The option list is an expression, so it can name a property, a dictionary literal, or a method call - and it re-evaluates, so a list that reads another property follows it.
 
 ```gdscript
 @tool # required for method calls in attributes
@@ -178,7 +178,7 @@ func get_directions():
 
 ![inspector](https://raw.githubusercontent.com/dbrizov/NaughtyAttributesGD/master/docs/markup/media/dropdown.gif)
 
-An `Array` uses each element as both label and value; a `Dictionary` uses the key as the label and the value as the value. A stored value that matches no option is shown as `{value} (not an option)` until you pick a real one — the widget never writes on your behalf.
+An `Array` uses each element as both label and value; a `Dictionary` uses the key as the label and the value as the value. A stored value that matches no option is shown as `{value} (not an option)` until you pick a real one - the widget never writes on your behalf.
 
 ### enum_flags
 
@@ -235,7 +235,7 @@ Give properties metadata. A property can have more than one meta attribute.
 
 ### enable_if / disable_if
 
-Greys the property out and refuses input, without hiding it. Decorators stay lit above a disabled property, and validators keep running — read-only is a drawing state, not a storage state.
+Greys the property out and refuses input. Decorators stay lit above a disabled property, and validators keep running - read-only is a drawing state, not a storage state.
 
 ```gdscript
 @tool # required for method calls in attributes
@@ -288,7 +288,7 @@ var dmg: int = 15
 
 ### on_value_changed
 
-Detects a value change and executes a callback. The callback takes the old and the new value. Keep in mind that the event fires only when the value is changed **from the inspector** — undo and redo restore values silently.
+Detects a value change and executes a callback. The callback takes the old and the new value. Keep in mind that the event fires only when the value is changed **from the inspector** - undo and redo restore values silently.
 
 ```gdscript
 @tool # required for method calls in attributes
