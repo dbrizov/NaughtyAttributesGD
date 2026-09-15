@@ -6,11 +6,9 @@ Installation
 The addon ships prebuilt binaries for Windows x86_64, Linux x86_64 and macOS (universal),
 so there is nothing to compile and no Rust toolchain to install.
 
-1. Download the latest zip from the `Releases page <https://github.com/dbrizov/NaughtyAttributesGD/releases>`_
+1. The addon is available in the `Asset Store <https://store.godotengine.org/asset/denis-rizov/naughtyattributes/>`_.
+2. Alternatively, download the latest zip from the `Releases page <https://github.com/dbrizov/NaughtyAttributesGD/releases>`_
    and copy ``addons/naughtyattributes/`` into your project.
-
-2. The addon is also being submitted to the editor's **Asset Store** tab, where it can be searched for,
-   downloaded and installed without leaving Godot.
 
 Restart the editor afterwards.
 
