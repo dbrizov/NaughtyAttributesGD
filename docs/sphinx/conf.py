@@ -1,5 +1,7 @@
 import sphinx_rtd_theme
+import tomllib
 from datetime import datetime
+from pathlib import Path
 from pygments.lexers.gdscript import GDScriptLexer
 from pygments.token import Name
 from sphinx.highlighting import lexers
@@ -15,10 +17,16 @@ def get_copyright_years(first_year):
     return f"{first_year}-{current_year}"
 
 
+def get_version():
+    cargo_toml = Path(__file__).parent.parent.parent / "Cargo.toml"
+    with open(cargo_toml, "rb") as file:
+        return tomllib.load(file)["workspace"]["package"]["version"]
+
+
 project = "NaughtyAttributesGD"
 copyright = f"{get_copyright_years(2026)} Denis Rizov"
 author = "Denis Rizov"
-release = "0.1.0"
+release = get_version()
 
 # -- General configuration ---------------------------------------------------
 
