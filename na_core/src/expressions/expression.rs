@@ -72,7 +72,7 @@ impl Expression {
 
         if expression.has_execute_failed() {
             let hint = if self.text.contains('(') {
-                get_call_hint(object)
+                get_method_call_hint(object)
             } else {
                 ""
             };
@@ -106,7 +106,7 @@ impl Expression {
     }
 }
 
-pub fn get_call_hint(object: &Gd<Object>) -> &'static str {
+pub fn get_method_call_hint(object: &Gd<Object>) -> &'static str {
     let is_tool = object
         .get("script")
         .try_to::<Gd<Script>>()

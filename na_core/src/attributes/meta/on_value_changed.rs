@@ -2,7 +2,7 @@ use godot::classes::Object;
 use godot::prelude::*;
 
 use crate::annotation::is_identifier;
-use crate::expressions::expression::get_call_hint;
+use crate::expressions::expression::get_method_call_hint;
 
 pub const KEY: &str = "on_value_changed";
 
@@ -37,7 +37,7 @@ impl OnValueChanged {
             return Err(format!(
                 "'{}' is not a method of the script{}",
                 self.method,
-                get_call_hint(object)
+                get_method_call_hint(object)
             ));
         }
 
