@@ -6,5 +6,5 @@ pub use na_editor::*;
 /// The GDExtension entry point; gdext registers every class through it.
 struct NaughtyAttributesExtensionLibrary;
 
-#[gdextension]
+#[gdextension(entry_symbol = naughtyattributes_init)]
 unsafe impl ExtensionLibrary for NaughtyAttributesExtensionLibrary {}

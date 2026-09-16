@@ -22,14 +22,14 @@ pub struct NaughtyEditorPlugin {
 #[godot_api]
 impl IEditorPlugin for NaughtyEditorPlugin {
     fn enter_tree(&mut self) {
-        na_print!("Editor plugin ready");
-
         let plugin = NaughtyEditorInspectorPlugin::new_gd();
         self.base_mut().add_inspector_plugin(&plugin);
         self.inspector_plugin = Some(plugin);
 
         self.add_inspector_edit_hook();
         self.connect_signals();
+
+        na_print!("v{} ready", env!("CARGO_PKG_VERSION"));
     }
 
     fn exit_tree(&mut self) {
