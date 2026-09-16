@@ -57,6 +57,10 @@ html_title = "NaughtyAttributes for Godot"
 # Drops the _sources\ folder and the "View page source" link that points at it.
 html_copy_source = False
 
+# The theme prints its attribution outside div[role="contentinfo"], where the
+# footer template cannot wrap it. templates/footer.html reprints it inside.
+html_show_sphinx = False
+
 # Replace that link with one that points at the page's source on GitHub.
 html_context = {
     "site_title": "NaughtyAttributes’ Docs for Godot",
