@@ -54,9 +54,14 @@ git rev-parse master rc v0.2.0       # all three must match
 
 gh workflow run rc.yml --ref rc
 
-# Re-doing a tag, only while no release exists for it:
+# If the release run fails, it fails in resolve or in the download -- both
+# happen before it touches the release branch or creates anything. Nothing
+# was published, so delete the tag, fix the cause, and tag again:
 
-git tag -d v0.2.0
-git push origin :refs/tags/v0.2.0
+git tag -d v0.2.0                    # delete locally
+git push origin :refs/tags/v0.2.0    # delete on the remote
 git tag v0.2.0 rc
 git push origin v0.2.0
+
+# Only safe while no release exists for that tag. Once one is out, ship a new
+# patch version instead -- the release branch is append-only.

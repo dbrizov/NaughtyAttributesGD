@@ -102,7 +102,7 @@ checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
 
 [[package]]
 name = "na"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "godot",
  "na_core",
@@ -111,7 +111,7 @@ dependencies = [
 
 [[package]]
 name = "na_core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "godot",
  "na_logging",
@@ -119,7 +119,7 @@ dependencies = [
 
 [[package]]
 name = "na_editor"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "godot",
  "na_core",
@@ -128,7 +128,7 @@ dependencies = [
 
 [[package]]
 name = "na_logging"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "godot",
 ]
