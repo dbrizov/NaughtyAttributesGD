@@ -1,0 +1,62 @@
+# 1. Bump the version on master.
+#    Cargo.toml -> [workspace.package] version = "0.2.0"
+#    The tag must match this number or the release fails.
+
+cargo build                          # refreshes Cargo.lock
+git add Cargo.toml Cargo.lock
+git commit -m "Release 0.2.0"
+git push origin master
+
+
+# 2. Advance rc. This builds all three platforms.
+#    --ff-only keeps rc at a commit that also exists on master. A real merge
+#    commit would put the tag on a commit CI never built, and the release
+#    would find no build to reuse. If the merge is refused, master was
+#    rebased -- reset rc to it rather than merging.
+
+git checkout rc
+git merge --ff-only master
+git push origin rc
+git checkout master
+gh run watch
+
+
+# 3. Tag and push. This does not rebuild -- it reuses the zip from step 2.
+#    Push the tag alone; pushing it with a branch fires both workflows and
+#    the tag run fails because the build is still running.
+
+git tag v0.2.0 rc
+git push origin v0.2.0
+gh run watch
+
+
+# 4. Check what came out.
+
+gh release view v0.2.0
+gh release download v0.2.0           # this zip goes to the asset library
+
+git fetch origin release
+git ls-tree -r --name-only origin/release    # only addons/naughtyattributes/**
+
+
+# 5. godotengine.org/asset-library -> Submit Asset, upload that zip.
+
+
+Troubleshooting
+---------------
+
+# "no successful RC run for <sha>" -- the tag is on a commit rc never built.
+
+git rev-parse master rc v0.2.0       # all three must match
+
+# Artifacts expire after 90 days. A no-op push to rc raises no event, so
+# rebuild the same commit by hand:
+
+gh workflow run rc.yml --ref rc
+
+# Re-doing a tag, only while no release exists for it:
+
+git tag -d v0.2.0
+git push origin :refs/tags/v0.2.0
+git tag v0.2.0 rc
+git push origin v0.2.0

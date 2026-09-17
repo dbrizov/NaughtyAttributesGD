@@ -1,0 +1,144 @@
+name: RC
+
+on:
+  push:
+    branches: [rc]
+  workflow_dispatch:
+
+concurrency:
+  group: rc-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  ADDON_DIR: addons/naughtyattributes
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test -p na_core
+
+  build:
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows
+            targets: x86_64-pc-windows-msvc
+            artifact: naughtyattributes.windows.x86_64.dll
+          - os: ubuntu-22.04
+            name: linux
+            targets: x86_64-unknown-linux-gnu
+            artifact: naughtyattributes.linux.x86_64.so
+          - os: macos-latest
+            name: macos
+            targets: aarch64-apple-darwin,x86_64-apple-darwin
+            artifact: naughtyattributes.macos.dylib
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.targets }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.name }}
+
+      - name: Build
+        shell: bash
+        run: |
+          IFS=',' read -ra targets <<< "${{ matrix.targets }}"
+          for target in "${targets[@]}"; do
+            cargo build --release -p na --target "$target"
+          done
+
+      - name: Collect
+        shell: bash
+        run: |
+          mkdir -p out
+          case "${{ matrix.name }}" in
+            windows)
+              cp target/x86_64-pc-windows-msvc/release/naughtyattributes.dll "out/${{ matrix.artifact }}"
+              ;;
+            linux)
+              cp target/x86_64-unknown-linux-gnu/release/libnaughtyattributes.so "out/${{ matrix.artifact }}"
+              ;;
+            macos)
+              lipo -create \
+                target/aarch64-apple-darwin/release/libnaughtyattributes.dylib \
+                target/x86_64-apple-darwin/release/libnaughtyattributes.dylib \
+                -output "out/${{ matrix.artifact }}"
+              codesign -s - --force "out/${{ matrix.artifact }}"
+              lipo -info "out/${{ matrix.artifact }}"
+              ;;
+          esac
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bin-${{ matrix.name }}
+          path: out/${{ matrix.artifact }}
+          if-no-files-found: error
+
+  package:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: bin-*
+          merge-multiple: true
+          path: bin
+
+      - name: Assemble
+        run: |
+          mkdir -p "payload/$ADDON_DIR/bin"
+          cp package/naughtyattributes.gdextension "payload/$ADDON_DIR/"
+          cp demo/addons/naughtyattributes/naughtyattributes.gdextension.uid "payload/$ADDON_DIR/"
+          cp README.md LICENSE NOTICES.md "payload/$ADDON_DIR/"
+          cp bin/* "payload/$ADDON_DIR/bin/"
+
+          mkdir -p "payload/$ADDON_DIR/demo"
+          cp -r demo/scenes demo/scripts "payload/$ADDON_DIR/demo/"
+          sed -i "s|res://scripts/|res://$ADDON_DIR/demo/scripts/|g" \
+            "payload/$ADDON_DIR/demo/scenes/demo.tscn"
+
+      - name: Verify payload
+        run: |
+          for f in bin/naughtyattributes.windows.x86_64.dll \
+                   bin/naughtyattributes.linux.x86_64.so \
+                   bin/naughtyattributes.macos.dylib \
+                   naughtyattributes.gdextension \
+                   naughtyattributes.gdextension.uid \
+                   README.md \
+                   LICENSE \
+                   NOTICES.md \
+                   demo/scenes/demo.tscn; do
+            test -s "payload/$ADDON_DIR/$f" || { echo "missing $f"; exit 1; }
+          done
+
+          scene="payload/$ADDON_DIR/demo/scenes/demo.tscn"
+          missing=0
+          for rel in $(grep -oE 'path="res://[^"]*"' "$scene" | sed -E 's|path="res://(.*)"|\1|'); do
+            test -s "payload/$rel" || { echo "demo.tscn references missing $rel"; missing=1; }
+          done
+          test "$missing" -eq 0 || exit 1
+
+          find payload -type f | sort
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: naughtyattributes-addon
+          path: payload/
+          if-no-files-found: error
+          retention-days: 90
