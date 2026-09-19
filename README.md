@@ -10,8 +10,6 @@ It's built as a GDExtension in Rust, and it is aimed at **GDScript users**.
 
 **[Documentation](https://godot.naughtyattributes.com/)**
 
-> GDScript has no user-definable annotations, so attributes are written as strings in the hint text of `@export_custom`. See [Writing Attributes](#writing-attributes) before reaching for any of the attribute sections.
-
 ## Installation
 
 > NaughtyAttributes requires **Godot 4.6** or later versions.
