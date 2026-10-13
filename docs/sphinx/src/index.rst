@@ -34,7 +34,6 @@ I am developing the project in my free time. If you like it you can support me b
 
     general/installation
     general/writing_attributes
-    general/diagnostics
 
 .. toctree::
     :maxdepth: 1

@@ -46,7 +46,7 @@ are available inside a single condition as well::
 
 .. note::
     A condition that fails to evaluate counts as satisfied, so a property never disappears because of a typo.
-    The failure is reported instead. See :ref:`label-diagnostics`.
+    The failure is reported in the Output panel instead.
 
 .. note::
     Validators do not run on a hidden property, and its message bubble hides with it.
